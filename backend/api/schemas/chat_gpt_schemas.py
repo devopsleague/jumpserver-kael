@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class ChatGPTResponseChoice(BaseModel):
     index: Optional[int]
-    delta: Optional[dict[Literal["role", "content"], str]]
+    delta: Optional[dict[Literal['role', 'content'], str]]
     finish_reason: Optional[str]
 
 
@@ -14,7 +14,6 @@ class ChatGPTResponse(BaseModel):
     created: int
     model: str
     choices: Optional[list[ChatGPTResponseChoice]]
-
 
 # {
 #     "id": "chatcmpl-7XmcU6k5YIUFLY36gYW9HPtarGplX",
