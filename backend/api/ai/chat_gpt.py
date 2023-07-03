@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from api.conf import settings
 from api.enums import ChatGPTModels
 from api.message import ChatGPTMessage
-from api.schemas.chat_gpt_schemas import ChatGPTResponse
+from api.schemas import ChatGPTResponse
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
