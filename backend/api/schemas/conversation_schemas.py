@@ -24,6 +24,7 @@ class AskResponseType(StrEnum):
     queueing = auto()
     message = auto()
     error = auto()
+    finish = auto()
 
 
 class AskResponse(BaseModel):
