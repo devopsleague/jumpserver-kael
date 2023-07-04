@@ -1,3 +1,4 @@
+import uuid
 from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
@@ -14,9 +15,21 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+@router.get("/test")
+async def test():
+    # from wisp.protobuf import service_pb2
+    # from wisp.protobuf import service_pb2_grpc
+    # from api.globals import GRPC_CHANNEL
+    # stub = service_pb2_grpc.ServiceStub(GRPC_CHANNEL)
+    #
+    # resp = stub.GetPublicSetting(service_pb2.Empty())
+    # print('resp', resp.data)
+    # print(stub.GetListenPorts(service_pb2.Empty()))
+    return {"Hello": "World"}
+
+
 @router.websocket("/chat")
 async def chat(websocket: WebSocket):
-
     async def reply(response: AskResponse):
         await websocket.send_json(jsonable_encoder(response))
 
@@ -57,7 +70,9 @@ async def chat(websocket: WebSocket):
                     try:
                         assert isinstance(data, ChatGPTMessage)
                         message = data
-                        conversation_id = message.id
+                        if conversation_id is None:
+                            assert ask_request.new_conversation
+                            conversation_id = uuid.uuid4()
                     except Exception as e:
                         logger.warning(f"convert message error: {e}")
                         continue
@@ -67,6 +82,10 @@ async def chat(websocket: WebSocket):
                         conversation_id=conversation_id,
                         message=message
                     ))
+                await reply(AskResponse(
+                    type=AskResponseType.finish,
+                    conversation_id=conversation_id
+                ))
             except Exception as e:
                 logger.error(str(e))
                 await reply(AskResponse(
