@@ -12,6 +12,7 @@ const props = defineProps({
 })
 
 const { message, asRawText } = toRefs(props)
+const role = props.message?.role !== 'assistant'
 
 const textRef = ref()
 
@@ -36,9 +37,9 @@ const wrapClass = computed(() => {
     'text-wrap',
     'min-w-[20px]',
     'rounded-md',
-    props.message?.role !== 'assistant' ? 'bg-[#d2f9d1]' : 'bg-[#f4f6f8]',
-    props.message?.role !== 'assistant' ? 'dark:bg-[#a1dc95]' : 'dark:bg-[#1e1e20]',
-    props.message?.role !== 'assistant' ? 'message-request' : 'message-reply',
+    role ? 'bg-[#d2f9d1]' : 'bg-[#f4f6f8]',
+    role ? 'dark:bg-[#a1dc95]' : 'dark:bg-[#1e1e20]',
+    role ? 'message-request' : 'message-reply',
     { 'text-red-500': props.message?.error },
   ]
 })
@@ -93,7 +94,7 @@ onUnmounted(() => {
 <template>
   <div class="text-black" :class="wrapClass">
     <div ref="textRef" class="leading-relaxed break-words">
-      <div v-if="asRawText" class="markdown-body" v-html="text" />
+      <div v-if="!asRawText" class="markdown-body" v-html="text" />
       <div v-else class="whitespace-pre-wrap" v-text="text" />
     </div>
   </div>

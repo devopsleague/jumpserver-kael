@@ -65,9 +65,9 @@ onMounted(() => {
 
 <template>
   <div class="content">
-    <main class="flex-1 overflow-hidden">
-      <div id="scrollRef" class="h-1/1 overflow-hidden overflow-y-auto p-4">
-        <div class="h-1/1">
+    <main class="flex-1 overflow-y-auto">
+      <div id="scrollRef" class="overflow-hidden p-4">
+        <div>
           <div v-if="Object.keys(chatStore).length < 1">
           </div>
           <template v-else>
@@ -113,8 +113,15 @@ onMounted(() => {
   width: 100%;
   height: 100%;
 }
-#scrollRef::-webkit-scrollbar {
-  background-color: rgba(0, 0, 0, 0.25);
-  width: 5px;
+main {
+  &::-webkit-scrollbar {
+    background-color: transparent;
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    box-shadow: inset 8px 10px 10px #c6c6c6;
+    border: 1px solid rgba(0,0,0,0);
+  }
 }
 </style>

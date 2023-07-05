@@ -63,12 +63,12 @@ const handleSelect = (value) => {
         <n-avatar :src="message?.role === 'assistant' ? robot : defaultAvatar" />
       </div>
       <div class="overflow-hidden flex-1 text-sm items-start">
-        <p>{{ message?.create_time || '' }}</p>
+        <p style="color: #b6bdc6">{{ message?.create_time || '' }}</p>
         <div class="message flex">
           <Text :message="message" :as-raw-text="asRawText" :error="error" />
           <n-dropdown trigger="hover" :options="options" @select="handleSelect">
-            <div style="display: inline-block;" class="hover:cursor-pointer">
-              <i class="fa fa-ellipsis-v"></i>
+            <div style="display: inline-block; color: #b6bdc6" class="hover:cursor-pointer">
+              <i class="fa fa-ellipsis-v caret-"></i>
             </div>
           </n-dropdown>
         </div>
