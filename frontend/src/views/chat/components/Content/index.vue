@@ -29,9 +29,7 @@ const dataSources = reactive([
 
 let webSocket = reactive(null)
 
-const onWebsocketOpen = (msg) => {
-  console.log('msg:===================onWebsocketOpen ', msg)
-}
+const onWebsocketOpen = (msg) => {}
 const onWebSocketMessage = (msg) => {
   const data = JSON.parse(msg.data)
   console.log('data: ', data)
@@ -84,7 +82,6 @@ onMounted(() => {
                 :error="item.error_detail"
                 :loading="loading"
                 :message="item.message"
-                @regenerate="onRegenerate(index)"
                 @delete="handleDelete(index)"
               />
             </div>
@@ -98,7 +95,7 @@ onMounted(() => {
         <n-button
           type="primary"
           class="ml-10px"
-          :disabled="!loading"
+          :disabled="loading"
           @click="onSend"
         >Send</n-button>
       </div>

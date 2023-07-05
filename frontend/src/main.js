@@ -4,7 +4,7 @@ import "virtual:windi.css"
 import App from './App.vue'
 import { setupRouter } from './router'
 import naive from 'naive-ui'
-import 'font-awesome/css/font-awesome.min.css'
+import 'font-awesome/css/font-awesome.css'
 import lodash from 'lodash'
 
 window._ = lodash

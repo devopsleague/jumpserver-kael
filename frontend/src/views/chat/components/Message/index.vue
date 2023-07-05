@@ -1,9 +1,10 @@
 <script setup>
 import { ref, toRefs, computed } from 'vue'
-import defaultAvatar from '@/assets/avatar.jpg'
 import Text from './Text.vue'
 import { useMessage, useDialog } from 'naive-ui'
 import { copy } from '@/utils/common'
+import defaultAvatar from '@/assets/avatar.jpg'
+import robot from '@/assets/pwa-192x192.png'
 
 const props = defineProps({
   id: Number,
@@ -59,7 +60,7 @@ const handleSelect = (value) => {
   <div ref="messageRef" class="mb-30px inline">
     <div class="flex" :class="[message.role === 'assistant' ? 'flex-row': 'flex-row-reverse']">
       <div class="avatar mr-6px ml-6px">
-        <n-avatar :src="defaultAvatar" />
+        <n-avatar :src="message.role === 'assistant' ? robot : defaultAvatar" />
       </div>
       <div class="overflow-hidden text-sm items-start">
         <p>{{ message.create_time }}</p>
@@ -67,7 +68,7 @@ const handleSelect = (value) => {
           <Text :message="message" :as-raw-text="asRawText" :error="error" />
           <div style="display: inline-block;">
             <n-dropdown trigger="hover" :options="options" @select="handleSelect">
-              <i class="iconfont fa-align-justify"></i>
+              <i class="fa fa-ellipsis-v"></i>
             </n-dropdown>
           </div>
         </div>
