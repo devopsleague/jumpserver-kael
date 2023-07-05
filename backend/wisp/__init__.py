@@ -11,10 +11,10 @@ def setup_protobuf():
     protobuf_path = os.path.join(current_dir, 'protobuf')
     sys.path.insert(0, protobuf_path)
 
-    globals.GRPC_CHANNEL = grpc.insecure_channel('localhost:9090')
+    globals.grpc_channel = grpc.insecure_channel('localhost:9090')
 
 
 def shutdown_protobuf():
-    if globals.GRPC_CHANNEL is None:
+    if globals.grpc_channel is None:
         return
-    globals.GRPC_CHANNEL.close()
+    globals.grpc_channel.close()

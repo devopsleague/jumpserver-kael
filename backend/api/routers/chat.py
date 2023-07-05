@@ -1,5 +1,6 @@
 import uuid
-from fastapi import APIRouter
+from typing import Optional
+from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from starlette.websockets import WebSocket, WebSocketDisconnect
@@ -19,13 +20,40 @@ router = APIRouter()
 async def test():
     # from wisp.protobuf import service_pb2
     # from wisp.protobuf import service_pb2_grpc
-    # from api.globals import GRPC_CHANNEL
-    # stub = service_pb2_grpc.ServiceStub(GRPC_CHANNEL)
+    # from api.globals import grpc_channel
+    # stub = service_pb2_grpc.ServiceStub(grpc_channel)
     #
     # resp = stub.GetPublicSetting(service_pb2.Empty())
     # print('resp', resp.data)
     # print(stub.GetListenPorts(service_pb2.Empty()))
     return {"Hello": "World"}
+
+
+def get_token(token: Optional[str] = None):
+    # 可以在这里进行验证 token 的有效性等其他逻辑
+    return token
+
+
+def get_info(token: str = Depends(get_token)):
+    # 在这里使用 token 请求其他接口，获取相关信息
+    # 这里使用示例的请求方法和 URL，您可以根据实际情况进行修改
+    url = f"https://example.com/api/info?token={token}"
+    return url
+
+
+@router.get("/feng")
+def read_items(info: str = Depends(get_info)):
+    # 在视图函数中使用注入的信息进行处理
+    return {"info": info}
+
+
+@router.get("/info")
+async def info():
+    from jms import CommandHandler
+    handler = CommandHandler()
+    await handler.run('test')
+
+    return {'data': 'test'}
 
 
 @router.websocket("/chat")
