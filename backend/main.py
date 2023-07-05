@@ -12,7 +12,6 @@ app = FastAPI()
 
 app.include_router(chat.router)
 
-# 解决跨站问题
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.http.cors_allow_origins,
@@ -21,8 +20,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# TODO 认证
-app.add_middleware(AuthMiddleware, my_option='test')
+
+# app.add_middleware(AuthMiddleware, my_option='test')
 
 
 def startup_event():
@@ -32,7 +31,6 @@ def startup_event():
 
 
 def shutdown_event():
-    # 在程序关闭时执行的操作，例如释放资源、关闭连接等
     print("应用程序关闭，执行清理操作")
     shutdown_protobuf()
 
