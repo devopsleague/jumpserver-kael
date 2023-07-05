@@ -31,6 +31,16 @@ async def test():
 
 def get_token(token: Optional[str] = None):
     # 可以在这里进行验证 token 的有效性等其他逻辑
+    token = "20f14031-da3b-4bb6-8364-05cd922a71f3"
+    from wisp.protobuf import service_pb2
+    from wisp.protobuf import service_pb2_grpc
+    from api.globals import grpc_channel
+    print('------------')
+    stub = service_pb2_grpc.ServiceStub(grpc_channel)
+    req = service_pb2.TokenRequest(token=token)
+    resp = stub.GetTokenAuthInfo(req)
+    print('resp', resp)
+
     return token
 
 
@@ -63,7 +73,6 @@ async def chat(websocket: WebSocket):
 
     await websocket.accept()
     # user = await websocket_auth(websocket)
-
     try:
         while True:
             params = await websocket.receive_json()

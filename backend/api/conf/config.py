@@ -26,6 +26,7 @@ class ChatGPTSetting(BaseModel):
     proxy: Optional[str] = None
     connect_timeout: int = Field(10, ge=1)
     read_timeout: int = Field(20, ge=1)
+    api_key: Optional[str] = None
 
 
 class LogSetting(BaseModel):
