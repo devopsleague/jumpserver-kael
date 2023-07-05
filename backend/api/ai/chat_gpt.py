@@ -14,7 +14,8 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-api_key = ''
+api_key = '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'
+
 
 def make_session() -> httpx.AsyncClient:
     if settings.chat_gpt.proxy is not None:

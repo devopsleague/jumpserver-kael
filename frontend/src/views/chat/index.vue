@@ -1,5 +1,4 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
 import Sider from './components/Sidebar/index.vue'
 import Content from './components/Content/index.vue'
 import { useMessage } from 'naive-ui'

@@ -13,7 +13,7 @@ const props = defineProps({
   error: String
 })
 
-const { message, loading } = toRefs(props)
+const { message = {}, loading } = toRefs(props)
 const NMessage = useMessage()
 const NDialog = useDialog()
 console.log('message: ', message.value)
@@ -57,20 +57,20 @@ const handleSelect = (value) => {
 
 </script>
 <template>
-  <div ref="messageRef" class="mb-30px inline">
-    <div class="flex" :class="[message.role === 'assistant' ? 'flex-row': 'flex-row-reverse']">
+  <div ref="messageRef" class="mb-30px">
+    <div class="flex" :class="[message?.role === 'assistant' ? 'flex-row': 'flex-row-reverse']">
       <div class="avatar mr-6px ml-6px">
-        <n-avatar :src="message.role === 'assistant' ? robot : defaultAvatar" />
+        <n-avatar :src="message?.role === 'assistant' ? robot : defaultAvatar" />
       </div>
-      <div class="overflow-hidden text-sm items-start">
-        <p>{{ message.create_time }}</p>
-        <div class="message">
+      <div class="overflow-hidden flex-1 text-sm items-start">
+        <p>{{ message?.create_time || '' }}</p>
+        <div class="message flex">
           <Text :message="message" :as-raw-text="asRawText" :error="error" />
-          <div style="display: inline-block;">
-            <n-dropdown trigger="hover" :options="options" @select="handleSelect">
+          <n-dropdown trigger="hover" :options="options" @select="handleSelect">
+            <div style="display: inline-block;" class="hover:cursor-pointer">
               <i class="fa fa-ellipsis-v"></i>
-            </n-dropdown>
-          </div>
+            </div>
+          </n-dropdown>
         </div>
       </div>
     </div>
@@ -87,5 +87,4 @@ const handleSelect = (value) => {
     border-radius: 50% !important;
   }
 }
-
 </style>
