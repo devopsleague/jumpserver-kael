@@ -18,3 +18,6 @@ def shutdown_protobuf():
     if globals.grpc_channel is None:
         return
     globals.grpc_channel.close()
+
+
+setup_protobuf()

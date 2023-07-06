@@ -1,11 +1,13 @@
 import uvicorn
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from utils.logger import setup_logger, LOGGING
-from wisp import setup_protobuf, shutdown_protobuf
+from wisp import shutdown_protobuf
+
 from api.conf import settings
-from api.middlewares import AuthMiddleware
+from api.middlewares import RequestMiddleware
 from api.routers import chat
 
 app = FastAPI()
@@ -20,13 +22,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# app.add_middleware(AuthMiddleware, my_option='test')
+app.add_middleware(RequestMiddleware)
 
 
 def startup_event():
     setup_logger()
-    setup_protobuf()
     print(f"On startup... http://{settings.http.host}:{settings.http.port}")
 
 

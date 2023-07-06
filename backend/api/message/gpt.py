@@ -8,6 +8,6 @@ from pydantic import BaseModel
 class ChatGPTMessage(BaseModel):
     id: uuid.UUID | str
     parent: Optional[uuid.UUID]
-    role: Literal['system', 'user', 'assistant']
+    role: Literal['system', 'user', 'assistant'] = 'user'
     create_time: Optional[datetime.datetime]
     content: str
