@@ -35,18 +35,14 @@ class ChatGPTManager:
         self.session = make_session()
 
     async def ask(
-            self, content: str, conversation_id: uuid.UUID = None,
-            history_ask: list = None, extra_args: Optional[dict] = None, **_kwargs
+            self, content: str, history_asks: list = None,
+            extra_args: Optional[dict] = None, **_kwargs
     ):
         model = ChatGPTModels('gpt_3_5')
         message_id = uuid.uuid4()
 
-        if not conversation_id:
-            messages = [content]
-        else:
-            # TODO 当前不记录历史
-            history_ask.append(content)
-            messages = history_ask
+        history_asks.append(content)
+        messages = history_asks
 
         base_url = settings.chat_gpt.openai_base_url
         data = {
@@ -58,7 +54,7 @@ class ChatGPTManager:
             "stream": True,
             **(extra_args or {})
         }
-
+        print('data', data)
         text_content = ''
         reply_message = None
 
