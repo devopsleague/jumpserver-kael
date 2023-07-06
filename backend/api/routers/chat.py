@@ -71,7 +71,7 @@ async def chat(websocket: WebSocket, connect_info: dict = Depends(operate_token)
 
     await websocket.accept()
     # user = await websocket_auth(websocket)
-    cache_asks = []
+    history_asks = []
     try:
         while True:
             params = await websocket.receive_json()
@@ -87,17 +87,13 @@ async def chat(websocket: WebSocket, connect_info: dict = Depends(operate_token)
             pass
 
             conversation_id = ask_request.conversation_id
-            # if not conversation_id:
-            #     conversation_id = ask_request.conversation_id
-
             try:
                 await reply(AskResponse(type=AskResponseType.waiting))
-                print('Current history ask', cache_asks)
                 manager = ChatGPTManager()
                 async for data in manager.ask(
                         content=ask_request.content,
                         conversation_id=conversation_id,
-                        history_ask=cache_asks
+                        history_asks=history_asks
                 ):
                     try:
                         assert isinstance(data, ChatGPTMessage)
