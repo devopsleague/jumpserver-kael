@@ -38,10 +38,11 @@ const onWebSocketError = (msg) => {
 }
 const onWebSocketClose = (msg) => {
   console.log('msg:=> onWebSocketClose ', msg)
+  initWebSocket()
 }
 
 const onSend = () => {
-  const time = dayjs().format('YYYY-MM-DD HH:mm:ss');
+  const time = dayjs().format('YYYY-MM-DD HH:mm:ss')
   const chat = {
     message: {
       content: value.value,
@@ -62,7 +63,8 @@ const onSend = () => {
 }
 
 const initWebSocket = () => {
-  const path = 'ws://127.0.0.1:8800/chat'
+  const protocol = document.location.protocol === 'https:' ? 'wss' : 'ws'
+  const path = `${protocol}://127.0.0.1:8800/chat`
   webSocket = new WebSocket(path)
   webSocket.onopen = onWebsocketOpen
   webSocket.onmessage = onWebSocketMessage
@@ -74,8 +76,13 @@ const handleStop = () => {
   loading.value = false
 }
 
+const onKeyUpEnter = () => {
+  onSend()
+}
+
 onMounted(() => {
   initWebSocket()
+  pageScroll('scrollRef')
 })
 </script>
 
@@ -103,7 +110,13 @@ onMounted(() => {
     </main>
     <footer class="footer p-4">
       <div class="flex">
-        <n-input v-model:value="value" type="text" placeholder="来说点什么吧..." />
+        <n-input
+          v-model:value="value"
+          type="text"
+          placeholder="来说点什么吧..."
+          :disabled="loading"
+          @keyup.enter="onKeyUpEnter"
+        />
         <n-button
           type="primary"
           class="ml-10px"

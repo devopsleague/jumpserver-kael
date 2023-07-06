@@ -17,7 +17,6 @@ const props = defineProps({
 const { message = {} } = toRefs(props)
 const NMessage = useMessage()
 const NDialog = useDialog()
-console.log('message: ', message.value)
 const asRawText = ref(message.role !== 'assistant')
 
 const options = computed(() => {
@@ -70,7 +69,7 @@ const handleSelect = (value) => {
         <div class="message flex">
           <Text :message="message" :as-raw-text="asRawText" :error="error" />
           <n-dropdown trigger="hover" :options="options" @select="handleSelect">
-            <div style="display: inline-block; color: #b6bdc6" class="hover:cursor-pointer">
+            <div style="display: inline-block; color: #b6bdc6; align-self: end;" class="hover:cursor-pointer">
               <i class="fa fa-ellipsis-v caret-"></i>
             </div>
           </n-dropdown>
