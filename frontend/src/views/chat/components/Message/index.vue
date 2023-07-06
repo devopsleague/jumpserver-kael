@@ -58,7 +58,7 @@ const handleSelect = (value) => {
 
 </script>
 <template>
-  <div ref="messageRef" class="mb-30px">
+  <div ref="messageRef" class="mb-20px">
     <div class="flex" :class="[message?.role === 'assistant' ? 'flex-row': 'flex-row-reverse']">
       <div class="avatar mr-6px ml-6px">
         <n-avatar :src="message?.role === 'assistant' ? robot : defaultAvatar" />

@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import Message from '../Message/index.vue'
 import { useChat } from '../../hooks/useChat.js'
 import dayjs from 'dayjs'
+import { pageScroll } from '@/utils/common'
 
 const { chatStore, activeId, filterChatId, addChatConversationById, addChatConversationContentById, updateChatStorage } = useChat()
 const value = ref('')
@@ -25,6 +26,7 @@ const onWebSocketMessage = (msg) => {
       addChatConversationById(data)
     } else {
       addChatConversationContentById(data.message.id, data.message.content)
+      pageScroll('scrollRef')
     }
   } else if (data.type === 'finish') {
     loading.value = false
@@ -48,6 +50,7 @@ const onSend = () => {
     }
   }
   addChatConversationById(chat)
+  pageScroll('scrollRef')
   const message = {
     content: value.value,
     sender: "user",

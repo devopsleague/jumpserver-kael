@@ -1,7 +1,7 @@
 import { ref, reactive } from 'vue'
 
 export function useChat() {
-  const chatStore = reactive(JSON.parse(localStorage.getItem('chatStorage')) || {})
+  const chatStore = reactive(JSON.parse(sessionStorage.getItem('chatStorage')) || {})
   let activeId = ref(1)
 
   const addChatConversationById = (chat) => {
@@ -23,7 +23,7 @@ export function useChat() {
   }
 
   const updateChatStorage = (data) => {
-    localStorage.setItem('chatStorage', JSON.stringify(data))
+    sessionStorage.setItem('chatStorage', JSON.stringify(data))
   }
 
   return {

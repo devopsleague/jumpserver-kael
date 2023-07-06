@@ -9,3 +9,17 @@ export const copy = _.throttle(function(value) {
   document?.execCommand('copy')
   document.body.removeChild(inputDom)
 }, 1400)
+
+
+export const pageScroll = (
+  el,
+  scrollOption = {
+    behavior: 'smooth',
+    block: 'end'
+  }
+) => {
+  setTimeout(() => {
+    const dom = document.getElementById(el)
+    dom.scrollIntoView(scrollOption)
+  }, 0)
+}
