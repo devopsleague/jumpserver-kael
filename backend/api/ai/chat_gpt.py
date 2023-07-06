@@ -36,31 +36,23 @@ class ChatGPTManager:
 
     async def ask(
             self, content: str, conversation_id: uuid.UUID = None,
-            parent_id: uuid.UUID = None, model: ChatGPTModels = None,
-            extra_args: Optional[dict] = None, **_kwargs
+            history_ask: list = None, extra_args: Optional[dict] = None, **_kwargs
     ):
         model = ChatGPTModels('gpt_3_5')
         message_id = uuid.uuid4()
-        new_message = ChatGPTMessage(
-            id=message_id,
-            role='user',
-            create_time=datetime.now(),
-            content=content,
-            parent=parent_id
-        )
 
-        messages = []
         if not conversation_id:
-            messages = [new_message]
+            messages = [content]
         else:
             # TODO 当前不记录历史
-            messages.append(new_message)
+            history_ask.append(content)
+            messages = history_ask
 
         base_url = settings.chat_gpt.openai_base_url
         data = {
             "model": model.code(),
             "messages": [
-                {"role": msg.role, "content": msg.content}
+                {"role": 'user', "content": msg}
                 for msg in messages
             ],
             "stream": True,

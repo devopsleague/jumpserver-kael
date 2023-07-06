@@ -12,8 +12,6 @@ logger = get_logger(__name__)
 
 
 class AskRequest(BaseModel):
-    model: str
-    new_conversation: bool
     conversation_id: Optional[uuid.UUID] = None
     content: str
     parent: Optional[uuid.UUID] = None
