@@ -2,12 +2,16 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import Message from '../Message/index.vue'
 import { useChat } from '../../hooks/useChat.js'
+import dayjs from 'dayjs'
 
-const { chatStore, addChatConversationById, addChatConversationContentById, updateChatStorage } = useChat()
+const { chatStore, activeId, filterChatId, addChatConversationById, addChatConversationContentById, updateChatStorage } = useChat()
 const value = ref('')
 const loading = ref(false)
-
 let webSocket = reactive({})
+
+const currentChatStore = computed(() => {
+  return chatStore[activeId.value]
+})
 
 const onWebsocketOpen = (msg) => {
   console.log('msg: -----------------open', msg)
@@ -17,10 +21,10 @@ const onWebSocketMessage = (msg) => {
   const data = JSON.parse(msg.data)
   if (data.type === 'message') {
     loading.value = true
-    if (!chatStore[data.conversation_id]) {
-      addChatConversationById(data.conversation_id, data)
+    if (filterChatId(data.message.id).length < 1) {
+      addChatConversationById(data)
     } else {
-      addChatConversationContentById(data.conversation_id, data.message.content)
+      addChatConversationContentById(data.message.id, data.message.content)
     }
   } else if (data.type === 'finish') {
     loading.value = false
@@ -28,13 +32,22 @@ const onWebSocketMessage = (msg) => {
   }
 }
 const onWebSocketError = (msg) => {
-  console.log('msg:===================onWebSocketError ', msg)
+  console.log('msg:=> onWebSocketError ', msg)
 }
 const onWebSocketClose = (msg) => {
-  console.log('msg:===================onWebSocketClose ', msg)
+  console.log('msg:=> onWebSocketClose ', msg)
 }
 
 const onSend = () => {
+  const time = dayjs().format('YYYY-MM-DD HH:mm:ss');
+  const chat = {
+    message: {
+      content: value.value,
+      role: "user",
+      create_time: time
+    }
+  }
+  addChatConversationById(chat)
   const message = {
     content: value.value,
     sender: "user",
@@ -68,25 +81,20 @@ onMounted(() => {
     <main class="flex-1 overflow-y-auto">
       <div id="scrollRef" class="overflow-hidden p-4">
         <div>
-          <div v-if="Object.keys(chatStore).length < 1">
-          </div>
-          <template v-else>
-            <div class="overflow-y-auto">
-              <Message
-                v-for="(item, index) of chatStore"
-                :key="index"
-                :error="item.error_detail"
-                :loading="loading"
-                :message="item.message"
-                @delete="handleDelete(index)"
-              />
-              <div v-if="loading" class="sticky bottom-0 left-0 flex justify-center">
-                <n-button type="warning" @click="handleStop">
-                  <i class="fa fa-stop-circle-o"></i> 停止
-                </n-button>
-              </div>
+          <div class="overflow-y-auto">
+            <Message
+              v-for="(item, index) of currentChatStore"
+              :key="index"
+              :loading="loading"
+              :message="item.message"
+              @delete="handleDelete(index)"
+            />
+            <div v-if="loading" class="sticky bottom-0 left-0 flex justify-center">
+              <n-button type="warning" @click="handleStop">
+                <i class="fa fa-stop-circle-o"></i> 停止
+              </n-button>
             </div>
-          </template>
+          </div>
         </div>
       </div>
     </main>

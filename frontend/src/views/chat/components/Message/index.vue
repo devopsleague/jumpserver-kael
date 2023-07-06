@@ -5,6 +5,7 @@ import { useMessage, useDialog } from 'naive-ui'
 import { copy } from '@/utils/common'
 import defaultAvatar from '@/assets/avatar.jpg'
 import robot from '@/assets/pwa-192x192.png'
+import dayjs from 'dayjs'
 
 const props = defineProps({
   id: Number,
@@ -13,7 +14,7 @@ const props = defineProps({
   error: String
 })
 
-const { message = {}, loading } = toRefs(props)
+const { message = {} } = toRefs(props)
 const NMessage = useMessage()
 const NDialog = useDialog()
 console.log('message: ', message.value)
@@ -62,8 +63,10 @@ const handleSelect = (value) => {
       <div class="avatar mr-6px ml-6px">
         <n-avatar :src="message?.role === 'assistant' ? robot : defaultAvatar" />
       </div>
-      <div class="overflow-hidden flex-1 text-sm items-start">
-        <p style="color: #b6bdc6">{{ message?.create_time || '' }}</p>
+      <div class="overflow-hidden flex-1 text-sm flex flex-col" :class="[message?.role === 'assistant' ? 'items-start': 'items-end']">
+        <p style="color: #b6bdc6">
+          {{ dayjs(message?.create_time).format('YYYY-MM-DD HH:mm:ss') }}
+        </p>
         <div class="message flex">
           <Text :message="message" :as-raw-text="asRawText" :error="error" />
           <n-dropdown trigger="hover" :options="options" @select="handleSelect">
