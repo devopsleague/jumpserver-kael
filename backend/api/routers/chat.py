@@ -1,4 +1,6 @@
 import uuid
+import time
+import asyncio
 
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,8 +12,9 @@ from api.ai import ChatGPTManager
 from api.message import ChatGPTMessage
 from api.enums import WSStatusCode
 from api.schemas import AskRequest, AskResponse, AskResponseType
-# from jms import TokenHandler, SessionHandler
+from jms import SessionHandler, JMSSession
 
+from utils import reply
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -59,20 +62,79 @@ router = APIRouter()
 #     return {'data': 'test'}
 #
 #
-def operate_token(token: Optional[str] = None):
-    print('-------------------')
-    return
+# def create_jms_session(token: Optional[str] = None) -> JMSSession:
+
+
+class BaseW:
+
+    async def run(self):
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(None, self.sync_run)
+        print('fengqiang')
+
+    @staticmethod
+    def sync_run():
+        time.sleep(2)
+        print('-------------------')
+
+
+# async def create_jms_session(token: Optional[str] = None) -> JMSSession:
+#     session_handler = SessionHandler()
+#     jms_session = session_handler.create_new_session(token)
+#     jms_session.active_session()
+#     return jms_session
+
+
+async def create_jms_session(token: Optional[str] = None):
+    return '=---------'
+
+
+def chat_func(ask_request: AskRequest, history_asks: list):
+    async def inner(websocket: WebSocket):
+        conversation_id = ask_request.conversation_id
+        manager = ChatGPTManager()
+        last_content = ''
+        async for data in manager.ask(
+                content=ask_request.content,
+                conversation_id=conversation_id,
+                history_asks=history_asks
+        ):
+            try:
+                assert isinstance(data, ChatGPTMessage)
+                message = data
+                last_content = message.content
+                if conversation_id is None:
+                    conversation_id = uuid.uuid4()
+            except Exception as e:
+                logger.warning(f"convert message error: {e}")
+                continue
+
+            await reply(
+                websocket, AskResponse(
+                    type=AskResponseType.message,
+                    conversation_id=conversation_id,
+                    message=message
+                )
+            )
+        await reply(
+            websocket, AskResponse(
+                type=AskResponseType.finish,
+                conversation_id=conversation_id
+            )
+        )
+        return last_content
+
+    return inner
 
 
 @router.websocket("/chat")
-async def chat(websocket: WebSocket, connect_info: dict = Depends(operate_token)):
-    async def reply(response: AskResponse):
-        await websocket.send_json(jsonable_encoder(response))
-
+# async def chat(websocket: WebSocket, jms_session: JMSSession = Depends(create_jms_session)):
+async def chat(websocket: WebSocket, jms_session: str = Depends(create_jms_session)):
+    print('Websocket 连接建立成功')
     await websocket.accept()
-    # user = await websocket_auth(websocket)
-    history_asks = []
+
     try:
+        history_asks = []
         while True:
             params = await websocket.receive_json()
             try:
@@ -83,42 +145,22 @@ async def chat(websocket: WebSocket, connect_info: dict = Depends(operate_token)
                 await websocket.close(WSStatusCode.data_error.value, "invalidAskRequest")
                 return
 
-            # 命令复核等...
-            pass
-
-            conversation_id = ask_request.conversation_id
             try:
-                await reply(AskResponse(type=AskResponseType.waiting))
-                manager = ChatGPTManager()
-                async for data in manager.ask(
-                        content=ask_request.content,
-                        conversation_id=conversation_id,
-                        history_asks=history_asks
-                ):
-                    try:
-                        assert isinstance(data, ChatGPTMessage)
-                        message = data
-                        if conversation_id is None:
-                            conversation_id = uuid.uuid4()
-                    except Exception as e:
-                        logger.warning(f"convert message error: {e}")
-                        continue
-
-                    await reply(AskResponse(
-                        type=AskResponseType.message,
-                        conversation_id=conversation_id,
-                        message=message
-                    ))
-                await reply(AskResponse(
-                    type=AskResponseType.finish,
-                    conversation_id=conversation_id
-                ))
+                # await jms_session.with_audit(
+                #     ask_request.content,
+                #     websocket,
+                #     chat_func(ask_request, history_asks)
+                # )
+                last_content = await chat_func(ask_request, history_asks)(websocket)
+                print('------', last_content)
             except Exception as e:
                 logger.error(str(e))
-                await reply(AskResponse(
-                    type=AskResponseType.error,
-                    error_detail=str(e)
-                ))
+                await reply(
+                    websocket, AskResponse(
+                        type=AskResponseType.error,
+                        error_detail=str(e)
+                    )
+                )
                 await websocket.close(WSStatusCode.server_error.value, 'unknownError')
     except WebSocketDisconnect:
         logger.error('Web socket disconnect')
