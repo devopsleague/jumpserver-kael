@@ -1,4 +1,5 @@
 import os
+import queue
 import asyncio
 
 from api import globals
@@ -13,9 +14,6 @@ logger = get_logger(__name__)
 
 
 class PollJMSEvent(BaseWisp):
-    def __init__(self):
-        super().__init__()
-        self.request_observer = None
 
     def clear_zombie_session(self):
         replay_dir = os.path.join(globals.PROJECT_DIR, 'data/replay')
@@ -24,26 +22,25 @@ class PollJMSEvent(BaseWisp):
         if not resp.status.ok:
             logger.error(f"Scan remain replay error: {resp.status.err}")
         else:
-            logger.info("Scan remain replay success")
-
-    async def on_next_task_response(self, task_response):
-        target_session = None
-        for session in SessionManager.get_store().values():
-            if isinstance(session, Session):
-                if session.id == task_response.task.session_id:
-                    target_session = session
-                    break
-
-        if target_session is not None:
-            if task_response.task.action == KillSession:
-                SessionHandler().close_session(target_session)
-            req = service_pb2.FinishedTaskRequest(task_id=task_response.task.id)
-            self.request_observer.on_next(req)
+            print("Scan remain replay success")
 
     def wait_for_kill_session_message(self):
-        self.request_observer = self.stub.DispatchTask(
-            self.on_next_task_response
-        )
+        session_handle = SessionHandler()
+        resp = self.stub.DispatchTask(iter(queue.Queue(maxsize=1000).get, None))
+        for task in resp:
+            task_id = task.id
+            session_id = task.session_id
+            task_action = task.action
+            target_session = None
+            for session in SessionManager.get_store().values():
+                if isinstance(session, Session) and session.id == session_id:
+                    target_session = session
+                    break
+            if target_session is not None:
+                if task_action == KillSession:
+                    session_handle.close_session(target_session)
+                req = service_pb2.FinishedTaskRequest(task_id=task_id.id)
+                self.stub.FinishSession(req)
 
     async def start_session_killer(self):
         self.wait_for_kill_session_message()
@@ -55,4 +52,16 @@ class PollJMSEvent(BaseWisp):
 
 def setup_poll_jms_event():
     poll_jms_event = PollJMSEvent()
-    asyncio.run(poll_jms_event.start())
+    asyncio.create_task(poll_jms_event.start())
+
+
+if __name__ == '__main__':
+    q = queue.Queue(maxsize=1000)
+    poll_jms_event = PollJMSEvent()
+    asyncio.create_task(poll_jms_event.start())
+    print('create_task -> poll_jms_event')
+    import time
+
+    time.sleep(1)
+    print('FinishedTaskRequest')
+    q.put(service_pb2.FinishedTaskRequest(task_id='2'))
