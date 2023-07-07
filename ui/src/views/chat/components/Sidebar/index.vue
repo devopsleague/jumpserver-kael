@@ -1,9 +1,10 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { reactive, computed, onMounted } from 'vue'
 import { useChatStore } from '@/store'
 
 const chatStore = useChatStore()
 const tabNum = computed(() => chatStore.tabNum)
+const activeTab = computed(() => chatStore.activeTab)
 const sessions = computed(() => chatStore.sessionsStore)
 
 const onNewChat = () => {
@@ -19,6 +20,7 @@ const onNewChat = () => {
 
 const switchTab = (id) => {
   chatStore.setActiveNum(id)
+  chatStore.filterChatId()
 }
 
 const onDelete = (id) => {
@@ -41,15 +43,15 @@ onMounted(() => {
       v-for="(item, index) in sessions"
       :key="index"
       class="card"
-      :class="[tabNum === item.id ? 'bg-gray-100' : '']"
+      :class="[activeTab === item.id ? 'active-tab' : '']"
       @click="switchTab(item.id)"
     >
       <span class="title">
         <i class="fa fa-commenting-o mr-8px"></i>
-        <span>{{ item.name }}</span>
+        <span style="user-select: none;">{{ item.name }}</span>
       </span>
-      <span class="action">
-        <i class="fa fa-trash-o" @click="onDelete(item.id)"></i>
+      <span v-if="activeTab === item.id" class="action">
+        <i class="fa fa-trash-o cursor-pointer" @click.stop="onDelete(item.id)"></i>
       </span>
     </div>
   </div>
@@ -73,6 +75,13 @@ onMounted(() => {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+  }
+}
+.active-tab {
+  border-color: #36ad6a;
+  background-color: rgb(245 245 245 / 1);
+  &:hover {
+    border-color: #36ad6a;
   }
 }
 </style>

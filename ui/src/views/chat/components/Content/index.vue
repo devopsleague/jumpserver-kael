@@ -1,25 +1,25 @@
 <script setup>
-import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import Message from '../Message/index.vue'
 import { useChat } from '../../hooks/useChat.js'
-import dayjs from 'dayjs'
 import { pageScroll } from '@/utils/common'
-import { createWebSocket, onSend, closeWs } from '@/utils/socket'
+import { createWebSocket, onSend, onClose, closeWs } from '@/utils/socket'
 import { useChatStore } from '@/store'
 
-const { chatStore, activeId, filterChatId, addChatConversationById, addChatConversationContentById } = useChat()
-const chatStore11 = useChatStore()
+const { hasChat, addChatConversationById, addChatConversationContentById } = useChat()
+const chatStore = useChatStore()
 const value = ref('')
 const loading = ref(false)
 
 const currentSessionStore = computed(() => {
-  return chatStore[activeId.value]
+  return chatStore.filterChat
 })
 
 const onWebSocketMessage = (data) => {
   if (data.type === 'message') {
     loading.value = true
-    if (filterChatId(data.message.id).length < 1) {
+    
+    if (hasChat(data.message.id)) {
       addChatConversationById(data)
     } else {
       addChatConversationContentById(data.message.id, data.message.content)
@@ -31,12 +31,11 @@ const onWebSocketMessage = (data) => {
 }
 
 const onSendHandle = () => {
-  const time = dayjs().format('YYYY-MM-DD HH:mm:ss')
   const chat = {
     message: {
       content: value.value,
       role: 'user',
-      create_time: time
+      create_time: new Date()
     }
   }
   addChatConversationById(chat)
@@ -79,7 +78,7 @@ onUnmounted(() => {
         <div>
           <div class="overflow-y-auto">
             <Message
-              v-for="(item, index) of currentSessionStore"
+              v-for="(item, index) of currentSessionStore.chats"
               :key="index"
               :loading="loading"
               :message="item.message"

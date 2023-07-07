@@ -1,3 +1,5 @@
+import { useChatStore } from '@/store'
+
 let ws= null; // 建立的连接
 let lockReconnect= false; // 是否真正建立连接
 let timeout= 10 * 1000; // 30秒一次心跳
@@ -6,10 +8,12 @@ let serverTimeoutObj= null; // 心跳倒计时
 let timeoutNum= null; // 断开 重连倒计时
 let globalCallback = null; //监听服务端消息
 let globalUri = null
+let chatStore = null
 
 // uri: 长链接地址
 // callback: 服务端消息回调函数
 export function createWebSocket(uri = globalUri, callback = globalCallback) {
+  chatStore = useChatStore()
   globalUri = uri
   globalCallback = callback
   ws = new WebSocket(uri)
@@ -53,7 +57,14 @@ export function onError(){
 // 连接关闭
 export function onClose(){
   console.log('连接关闭')
-  reconnect()
+  const chat = {
+    message: {
+      content: '连接已关闭',
+      role: 'assistant',
+      create_time: new Date()
+    }
+  }
+  chatStore.addChatsById(chat)
 }
 
 // 断开关闭
