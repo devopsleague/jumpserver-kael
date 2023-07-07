@@ -150,8 +150,7 @@ async def chat(websocket: WebSocket, jms_session: str = Depends(create_jms_sessi
                 await websocket.send_text("pong")
                 continue
             else:
-                # 处理 WebSocket 断开连接的情况
-                print('---websocket.disconnect---')
+                print('ui websocket.disconnect')
                 raise WebSocketDisconnect
 
             try:
