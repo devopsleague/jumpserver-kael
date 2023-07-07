@@ -5,8 +5,10 @@ import { useChat } from '../../hooks/useChat.js'
 import dayjs from 'dayjs'
 import { pageScroll } from '@/utils/common'
 import { createWebSocket, onSend, closeWs } from '@/utils/socket'
+import { useChatStore } from '@/store'
 
 const { chatStore, activeId, filterChatId, addChatConversationById, addChatConversationContentById } = useChat()
+const chatStore11 = useChatStore()
 const value = ref('')
 const loading = ref(false)
 
@@ -48,7 +50,7 @@ const onSendHandle = () => {
 
 const initWebSocket = () => {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const path = `${protocol}://127.0.0.1:8800/chat`
+  const path = `${protocol}://127.0.0.1:8880/chat`
   createWebSocket(path, onWebSocketMessage)
 }
 
