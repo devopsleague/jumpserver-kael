@@ -4,6 +4,7 @@
 Kael 是 JumpServer 连接 GPT 的组件，计划支持多种 GPT, 
 
 Kael 前端 vue3，后端使用 Fastapi 实现， 名字来源 [Kael](https://www.dotafire.com/dota-2/guide/kael-1867)，
+
 作为 Dota 中最强大的法师，能融合多种元素，创造出最多样的魔法，所以取名为 Kael。
 
 ## 支持的 GPT
