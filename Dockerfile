@@ -20,8 +20,11 @@ FROM jumpserver/python:3.10-slim-buster
 ARG TARGETARCH
 
 ARG DEPENDENCIES="                    \
+    ca-certificates                   \
+    curl                              \
     libssl-dev                        \
-    locales"
+    locales                           \
+    vim"
 
 ARG APT_MIRROR=http://mirrors.ustc.edu.cn
 
