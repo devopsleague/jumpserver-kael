@@ -14,48 +14,35 @@ Kael 前端 vue3，后端使用 Fastapi 实现， 名字来源 [Kael](https://ww
 - [ ] Bard
 
 
-## 安装
+## 开发环境
 
 1.下载项目
 
 ```shell
-git clone https://github.com/jumpserver/kael.git
+$ git clone https://github.com/jumpserver/kael.git
 ```
 
-2.编译应用
-
-
-## 使用 (以 Linux amd64 服务器为例)
-
-1.拷贝压缩包文件到对应的服务器
-
+2.安装依赖
+```agsl
+$ cd app
+$ pip install -r requirements.txt
+$ cd ../ui
+$ npm install
 ```
-待定
-```
+3.运行 API
 
-2.解压编译的压缩包
-```shell
-待定
-```
-
-3.创建配置文件config.yml，配置参数请参考[config_example.yml](https://github.com/jumpserver/koko/blob/master/config_example.yml)文件
-```shell
-touch config.yml
+```agsl
+$ cd app
+$ cp config_example.yml config.yml
+$ vim config.yml # 修改配置文件中的各个 key
+$ python main.py
 ```
 
-4.运行 Kael
-```shell
-待定
+4.运行 UI
 
-./koko
+```agsl
+$ cd ui
+$ cp .env.development .env
+$ vim .env # 修改 VUE_APP_API_HOST
+$ npm run serve
 ```
-
-
-## 开发环境
-
-1. 运行 server 后端
-
-2. 运行 ui 前端
-
-3. 测试
-
