@@ -2,7 +2,7 @@ import uvicorn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from starlette.staticfiles import StaticFiles
 from utils.logger import setup_logger, LOGGING
 from wisp import shutdown_protobuf
 
@@ -22,14 +22,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 app.add_middleware(RequestMiddleware)
 
 
 def startup_event():
     setup_logger()
     # setup_poll_jms_event()
-    print(f"On startup... http://{settings.http.host}:{settings.http.port}")
 
 
 def shutdown_event():
