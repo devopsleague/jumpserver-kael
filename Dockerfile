@@ -51,6 +51,12 @@ ARG PIP_MIRROR=https://pypi.douban.com/simple
 RUN --mount=type=cache,target=/root/.cache/pip \
     set -ex \
     && pip config set global.index-url ${PIP_MIRROR} \
+    && pip install --upgrade pip \
+    && pip install --upgrade setuptools wheel \
+    && \
+    if [ "${TARGETARCH}" == "loong64" ]; then \
+        pip install https://download.jumpserver.org/pypi/simple/grpcio/grpcio-1.56.0-cp310-cp310-linux_loongarch64.whl; \
+    fi \
     && pip install -r requirements/requirements.txt
 
 WORKDIR /opt/kael
