@@ -9,6 +9,7 @@ from wisp import shutdown_protobuf
 from api.conf import settings
 from api.middlewares import RequestMiddleware
 from api.routers import chat
+from jms.poll import setup_poll_jms_event
 
 app = FastAPI()
 
@@ -27,6 +28,7 @@ app.add_middleware(RequestMiddleware)
 
 def startup_event():
     setup_logger()
+    setup_poll_jms_event()
     print(f"On startup... http://{settings.http.host}:{settings.http.port}")
 
 
