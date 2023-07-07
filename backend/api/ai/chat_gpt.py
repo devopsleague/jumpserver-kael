@@ -42,7 +42,7 @@ class ChatGPTManager:
         message_id = uuid.uuid4()
 
         history_asks.append(content)
-        messages = history_asks
+        messages = history_asks[-6:]
 
         base_url = settings.chat_gpt.openai_base_url
         data = {
