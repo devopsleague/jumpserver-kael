@@ -6,8 +6,10 @@ from pydantic import BaseModel
 from starlette.websockets import WebSocket
 
 from jms.base import BaseWisp
+from api.schemas import AskResponse, AskResponseType
 from wisp.protobuf import service_pb2
 from wisp.protobuf.common_pb2 import Session, CommandACL, RiskLevel
+from utils import reply
 
 
 class CommandRecord(BaseModel):
@@ -25,7 +27,8 @@ class CommandHandler(BaseWisp):
         super().__init__()
         self.session = session
         self.command_acls = command_acls
-        self.websocket = None
+        self.websocket: Optional[WebSocket] = None
+        self.conversation_id = None
 
     def record_command(self, command_record: CommandRecord):
         req = service_pb2.CommandRequest(
@@ -72,7 +75,13 @@ class CommandHandler(BaseWisp):
 
     # TODO 还有一些问题没解决 函数暂时用不了
     def wait_for_ticket_status_change(self, ticket_info: service_pb2.TicketInfo):
-        # websocket 回话了哈
+        reply(
+            self.websocket, AskResponse(
+                type=AskResponseType.waiting,
+                conversation_id=self.conversation_id,
+                system_message=f'等待工单审批: {ticket_info.ticket_detail_url}'
+            )
+        )
         start_time = time.time()
         end_time = start_time + self.WAIT_TICKET_TIMEOUT
 
@@ -93,7 +102,13 @@ class CommandHandler(BaseWisp):
                 break
             elif state in [service_pb2.TicketState.Rejected, service_pb2.TicketState.Closed]:
                 ticket_closed = True
-                print(self.REJECT_MESSAGE)
+                reply(
+                    self.websocket, AskResponse(
+                        type=AskResponseType.waiting,
+                        conversation_id=self.conversation_id,
+                        system_message=f'工单关闭或拒绝'
+                    )
+                )
                 break
 
             time.sleep(self.WAIT_TICKET_INTERVAL)
@@ -104,19 +119,25 @@ class CommandHandler(BaseWisp):
         return is_continue
 
     def command_acl_filter(self, command: CommandRecord):
-        is_continue = True
+        is_continue = False
         acl = self.match_rule(command.input)
         if acl is not None:
             command.risk_level = RiskLevel.Danger
             if acl.action == CommandACL.Reject:
-                print('Reject', command.input, self.REJECT_MESSAGE)
-                is_continue = False
+                reply(
+                    self.websocket, AskResponse(
+                        type=AskResponseType.reject,
+                        conversation_id=self.conversation_id,
+                        system_message=self.REJECT_MESSAGE
+                    )
+                )
             elif acl.action == CommandACL.Review:
                 try:
                     is_continue = self.create_and_wait_ticket(command.input, acl)
-                except RuntimeError as e:
-                    is_continue = False
+                except Exception as e:
                     print(command.input, str(e))
+            else:
+                is_continue = True
         return is_continue
 
     def close_ticket(self, ticket_info: service_pb2.TicketInfo):
