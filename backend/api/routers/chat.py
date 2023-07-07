@@ -141,13 +141,14 @@ async def chat(websocket: WebSocket, jms_session: str = Depends(create_jms_sessi
                 ask_request = AskRequest(**params)
             except ValidationError as e:
                 logger.warning(f"Invalid ask request: {e}")
-                await reply(AskResponse(type=AskResponseType.error, error_detail=str(e)))
+                await reply(AskResponse(type=AskResponseType.error, system_message=str(e)))
                 await websocket.close(WSStatusCode.data_error.value, "invalidAskRequest")
                 return
 
             try:
                 # await jms_session.with_audit(
                 #     ask_request.content,
+                #     ask_request.conversation_id,
                 #     websocket,
                 #     chat_func(ask_request, history_asks)
                 # )
@@ -158,7 +159,7 @@ async def chat(websocket: WebSocket, jms_session: str = Depends(create_jms_sessi
                 await reply(
                     websocket, AskResponse(
                         type=AskResponseType.error,
-                        error_detail=str(e)
+                        system_message=str(e)
                     )
                 )
                 await websocket.close(WSStatusCode.server_error.value, 'unknownError')

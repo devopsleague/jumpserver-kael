@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from api import globals
 from jms.base import BaseWisp
 from wisp.protobuf import service_pb2
 from wisp.protobuf.common_pb2 import Session
@@ -9,8 +10,8 @@ from .asciinema import AsciinemaWriter
 
 
 class ReplayHandler(BaseWisp):
-    REPLAY_DIR = "data/replay"
     DEFAULT_ENCODING = "utf-8"
+    REPLAY_DIR = os.path.join(globals.PROJECT_DIR, 'data/replay')
 
     def __init__(self, session: Session):
         super().__init__()
@@ -39,8 +40,7 @@ class ReplayHandler(BaseWisp):
             print(file.name, f"create replay file error: {str(e)}")
 
     def ensure_replay_dir(self):
-        dir_path = os.path.join(os.getcwd(), self.REPLAY_DIR)
-        os.makedirs(dir_path, exist_ok=True)
+        os.makedirs(self.REPLAY_DIR, exist_ok=True)
 
     def write_row(self, row):
         row = row.replace("\n", "\r\n")
@@ -63,7 +63,6 @@ class ReplayHandler(BaseWisp):
     def upload(self):
         try:
             self.file_writer.close()
-
             replay_request = service_pb2.ReplayRequest(
                 session_id=self.session.id,
                 replay_file_path=self.file.absolute().as_posix()

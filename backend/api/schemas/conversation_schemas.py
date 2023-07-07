@@ -19,7 +19,7 @@ class AskRequest(BaseModel):
 
 class AskResponseType(StrEnum):
     waiting = auto()
-    queueing = auto()
+    reject = auto()
     message = auto()
     error = auto()
     finish = auto()
@@ -29,4 +29,4 @@ class AskResponse(BaseModel):
     type: AskResponseType
     conversation_id: uuid.UUID = None
     message: Optional[ChatGPTMessage] = None
-    error_detail: str = None
+    system_message: str = None
