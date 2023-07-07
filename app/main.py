@@ -13,7 +13,7 @@ from jms.poll import setup_poll_jms_event
 
 app = FastAPI()
 
-app.include_router(chat.router)
+app.include_router(chat.router, prefix="/kael")
 
 app.add_middleware(
     CORSMiddleware,
