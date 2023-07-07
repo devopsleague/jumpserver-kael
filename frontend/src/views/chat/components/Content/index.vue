@@ -1,25 +1,21 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import Message from '../Message/index.vue'
 import { useChat } from '../../hooks/useChat.js'
 import dayjs from 'dayjs'
 import { pageScroll } from '@/utils/common'
+import { createWebSocket, onSend, closeWs } from '@/utils/socket'
 
-const { chatStore, activeId, filterChatId, addChatConversationById, addChatConversationContentById, updateChatStorage } = useChat()
+const { chatStore, activeId, filterChatId, addChatConversationById, addChatConversationContentById } = useChat()
 const value = ref('')
 const loading = ref(false)
-let webSocket = reactive({})
 
-const currentChatStore = computed(() => {
+const currentSessionStore = computed(() => {
   return chatStore[activeId.value]
 })
 
-const onWebsocketOpen = (msg) => {
-  console.log('msg: -----------------open', msg)
-}
-
-const onWebSocketMessage = (msg) => {
-  const data = JSON.parse(msg.data)
+const onWebSocketMessage = (data) => {
+  console.log('msg: ---------------------------', msg)
   if (data.type === 'message') {
     loading.value = true
     if (filterChatId(data.message.id).length < 1) {
@@ -30,46 +26,31 @@ const onWebSocketMessage = (msg) => {
     }
   } else if (data.type === 'finish') {
     loading.value = false
-    updateChatStorage(chatStore)
   }
 }
-const onWebSocketError = (msg) => {
-  console.log('msg:=> onWebSocketError ', msg)
-}
-const onWebSocketClose = (msg) => {
-  console.log('msg:=> onWebSocketClose ', msg)
-  initWebSocket()
-}
 
-const onSend = () => {
+const onSendHandle = () => {
   const time = dayjs().format('YYYY-MM-DD HH:mm:ss')
   const chat = {
     message: {
       content: value.value,
-      role: "user",
+      role: 'user',
       create_time: time
     }
   }
   addChatConversationById(chat)
   pageScroll('scrollRef')
   const message = {
-    content: value.value,
-    sender: "user",
-    new_conversation: true,
-    model: 'gpt_3_5',
+    content: value.value
   }
-  webSocket.send(JSON.stringify(message))
+  onSend(message)
   value.value = ''
 }
 
 const initWebSocket = () => {
-  const protocol = document.location.protocol === 'https:' ? 'wss' : 'ws'
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
   const path = `${protocol}://127.0.0.1:8800/chat`
-  webSocket = new WebSocket(path)
-  webSocket.onopen = onWebsocketOpen
-  webSocket.onmessage = onWebSocketMessage
-  webSocket.onerror = onWebSocketError
-  webSocket.onclose = onWebSocketClose
+  createWebSocket(path, onWebSocketMessage)
 }
 
 const handleStop = () => {
@@ -77,12 +58,16 @@ const handleStop = () => {
 }
 
 const onKeyUpEnter = () => {
-  onSend()
+  onSendHandle()
 }
 
 onMounted(() => {
   initWebSocket()
   pageScroll('scrollRef')
+})
+
+onUnmounted(() => {
+  closeWs()
 })
 </script>
 
@@ -93,7 +78,7 @@ onMounted(() => {
         <div>
           <div class="overflow-y-auto">
             <Message
-              v-for="(item, index) of currentChatStore"
+              v-for="(item, index) of currentSessionStore"
               :key="index"
               :loading="loading"
               :message="item.message"
@@ -121,7 +106,7 @@ onMounted(() => {
           type="primary"
           class="ml-10px"
           :disabled="loading"
-          @click="onSend"
+          @click="onSendHandle"
         >
           <i class="fa fa-send"></i>
         </n-button>

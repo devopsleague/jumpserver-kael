@@ -1,7 +1,7 @@
 import { ref, reactive } from 'vue'
 
 export function useChat() {
-  const chatStore = reactive(JSON.parse(sessionStorage.getItem('chatStorage')) || {})
+  const chatStore = reactive({})
   let activeId = ref(1)
 
   const addChatConversationById = (chat) => {
@@ -22,16 +22,11 @@ export function useChat() {
     return filterChat
   }
 
-  const updateChatStorage = (data) => {
-    sessionStorage.setItem('chatStorage', JSON.stringify(data))
-  }
-
   return {
     chatStore,
     activeId,
     filterChatId,
     addChatConversationById,
-    addChatConversationContentById,
-    updateChatStorage
+    addChatConversationContentById
   }
 }

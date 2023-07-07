@@ -1,120 +1,111 @@
-export default class Socket {
-  // 要连接的URL
-  url
-  // 一个协议字符串或一个协议字符串数组。
-  // 这些字符串用来指定子协议，这样一个服务器就可以实现多个WebSocket子协议
-  protocols
-  // WebSocket 实例
-  ws
-  // 是否在重连中
-  isReconnectionLoading = false
-  // 延时重连的 id
-  timeId = null
-  // 是否是用户手动关闭连接
-  isCustomClose = false
-  // 错误消息队列
-  errorStack = []
+let ws= null; // 建立的连接
+let lockReconnect= false; // 是否真正建立连接
+let timeout= 10 * 1000; // 30秒一次心跳
+let timeoutObj= null; // 心跳心跳倒计时
+let serverTimeoutObj= null; // 心跳倒计时
+let timeoutNum= null; // 断开 重连倒计时
+let globalCallback = null; //监听服务端消息
+let globalUri = null
 
-  constructor(url, protocols) {
-    this.url = url
-    this.protocols = protocols
-    this.createWs()
+// uri: 长链接地址
+// callback: 服务端消息回调函数
+export function createWebSocket(uri = globalUri, callback = globalCallback) {
+  globalUri = uri
+  globalCallback = callback
+  ws = new WebSocket(uri)
+  console.log('ws: ----------------------------------', ws)
+  ws.onopen = ()=>{
+    // 开启连接心跳
+    start()
   }
-
-  createWs() {
-    if ('WebSocket' in window) {
-      // 实例化
-      this.ws = new WebSocket(this.url, this.protocols)
-      // 监听事件
-      this.onopen()
-      this.onerror()
-      this.onclose()
-      // this.ws.onmessage = this.onmessage
-    } else {
-      console.log('你的浏览器不支持 WebSocket')
-    }
-  }
-
-  // 监听成功
-  onopen() {
-    this.ws.onopen = () => {
-      console.log(this.ws, 'onopen')
-      // 发送成功连接之前所发送失败的消息
-      this.errorStack.forEach(message => {
-        this.send(message)
-      })
-      this.errorStack = []
-      this.isReconnectionLoading = false
-    }
-  }
-
-  // 监听错误
-  onerror() {
-    this.ws.onerror = (err) => {
-      console.log(err, 'onerror')
-      this.reconnection()
-      this.isReconnectionLoading = false
-    }
-  }
-
-  // 监听关闭
-  onclose() {
-    this.ws.onclose = () => {
-      console.log('onclose')
-
-      // 用户手动关闭的不重连
-      if (this.isCustomClose) return
-
-      this.reconnection()
-      this.isReconnectionLoading = false
-    }
-  }
-
-  // 接收 WebSocket 消息
-  async onmessage() {
-    this.ws.onmessage = (event) => {
-      console.log('his.ws: ', this.ws);
-      try {
-        const data = JSON.parse(event.data)
-      } catch (error) {
-        console.log(error, 'error')
-      }
-    }
-  }
-
-  // 重连
-  reconnection() {
-    // 防止重复
-    if (this.isReconnectionLoading) return
-
-    this.isReconnectionLoading = true
-    clearTimeout(this.timeId)
-    this.timeId = setTimeout(() => {
-      this.createWs()
-    }, 3000)
-  }
-
-  // 发送消息
-  send(message) {
+  ws.onmessage = onMessage
+  ws.onerror = onError
+  ws.onclose = onClose
+  ws.onsend = onSend
+}
+ 
+// 发送消息
+export function onSend(message){
+  console.log(`发送消息： ---${message}`)
+  if (typeof message !== 'string') {
     message = JSON.stringify(message)
-    // 连接失败时的处理
-    if (this.ws.readyState !== 1) {
-      this.errorStack.push(message)
-      return
+  }
+  ws.send(message)
+}
+ 
+// 接受服务端消息
+export function onMessage(res){
+  let msgData = res.data
+  if (typeof msgData != 'object' && msgData != 'Connect success') {
+    let data = msgData.replace(/\ufeff/g, '')
+    console.log('data: ---------------------------------ddd', data)
+    let message = JSON.parse(data)
+   // 服务端消息回掉
+    globalCallback(message)
+   // 重置心跳
+    reset()
+  }
+}
+ 
+// 连接失败
+export function onError(){
+  console.log('连接失败')
+  reconnect()
+}
+ 
+// 连接关闭
+export function onClose(){
+  console.log('连接关闭')
+  reconnect()
+}
+
+// 断开关闭
+export function closeWs(){
+  if(lockReconnect) {
+    ws.close()
+    ws = null
+    lockReconnect = false
+  }
+}
+ 
+// 发送心跳
+export function start () {
+  timeoutObj && clearTimeout(timeoutObj);
+  serverTimeoutObj && clearTimeout(serverTimeoutObj);
+  timeoutObj = setTimeout(function(){
+    // 这里发送一个心跳，后端收到后，返回一个心跳消息
+    if (ws.readyState == 1) {
+      // 如果连接正常
+      ws.send('{key: heartbeat}')
+    } else{
+      // 否则重连
+      reconnect()
     }
+    serverTimeoutObj = setTimeout(function() {
+      //超时关闭
+      ws.close()
+    }, timeout)
+  }, timeout)
+}
 
-    this.ws.send(message)
+//重置心跳
+export function reset(){
+  clearTimeout(timeoutObj)
+  clearTimeout(serverTimeoutObj)
+  start()
+}
+ 
+// 重新连接
+export function reconnect() {
+  if(lockReconnect) {
+    return
   }
-
-  // 手动关闭
-  close() {
-    this.isCustomClose = true
-    this.ws.close()
-  }
-
-  // 手动开启
-  start() {
-    this.isCustomClose = false
-    this.reconnection()
-  }
+  lockReconnect = true
+  // 没连接上会一直重连，设置延迟避免请求过多
+  timeoutNum && clearTimeout(timeoutNum)
+  timeoutNum = setTimeout(function () {
+    // 新连接
+    createWebSocket()
+    lockReconnect = false
+  }, 10000)
 }
