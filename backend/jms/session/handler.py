@@ -1,5 +1,8 @@
+import uuid
 import asyncio
+from typing import Optional
 from starlette.websockets import WebSocket
+
 
 from datetime import datetime
 from jms.base import BaseWisp
@@ -33,11 +36,12 @@ class JMSSession(BaseWisp):
         self.replay_handler.upload()
         self.session_handler.close_session(self.session)
 
-    async def with_audit(self, command: str, websocket: WebSocket, chat_func):
+    async def with_audit(self, command: str, websocket: WebSocket, conversation_id: Optional[uuid.UUID], chat_func):
         loop = asyncio.get_event_loop()
         command_record = CommandRecord(input=command)
         try:
             self.command_handler.websocket = websocket
+            self.command_handler.conversation_id = conversation_id
             is_continue = self.command_handler.command_acl_filter(command_record)
             loop.run_in_executor(None, self.replay_handler.write_input, command_record.input)
             if not is_continue:
@@ -45,7 +49,6 @@ class JMSSession(BaseWisp):
 
             result = await chat_func(websocket)
             command_record.output = result
-
             loop.run_in_executor(None, self.replay_handler.write_input, result.output)
             return result
 
