@@ -15,7 +15,7 @@ window.$message = useMessage()
         :collapsed-width="0"
         :width="240"
         show-trigger="arrow-circle"
-        content-style="padding: 24px;"
+        content-style="padding: 16px;"
         bordered
       >
         <Sider />

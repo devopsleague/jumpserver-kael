@@ -13,9 +13,7 @@ export function createWebSocket(uri = globalUri, callback = globalCallback) {
   globalUri = uri
   globalCallback = callback
   ws = new WebSocket(uri)
-  console.log('ws: ----------------------------------', ws)
   ws.onopen = ()=>{
-    // 开启连接心跳
     start()
   }
   ws.onmessage = onMessage
@@ -26,7 +24,7 @@ export function createWebSocket(uri = globalUri, callback = globalCallback) {
  
 // 发送消息
 export function onSend(message){
-  console.log(`发送消息： ---${message}`)
+  console.log(`发送消息`)
   if (typeof message !== 'string') {
     message = JSON.stringify(message)
   }
@@ -38,7 +36,6 @@ export function onMessage(res){
   let msgData = res.data
   if (typeof msgData != 'object' && msgData != 'Connect success') {
     let data = msgData.replace(/\ufeff/g, '')
-    console.log('data: ---------------------------------ddd', data)
     let message = JSON.parse(data)
    // 服务端消息回掉
     globalCallback(message)
@@ -76,7 +73,8 @@ export function start () {
     // 这里发送一个心跳，后端收到后，返回一个心跳消息
     if (ws.readyState == 1) {
       // 如果连接正常
-      ws.send('{key: heartbeat}')
+      console.log('发送心跳')
+      // ws.send('{key: heartbeat}')
     } else{
       // 否则重连
       reconnect()

@@ -15,7 +15,6 @@ const currentSessionStore = computed(() => {
 })
 
 const onWebSocketMessage = (data) => {
-  console.log('msg: ---------------------------', msg)
   if (data.type === 'message') {
     loading.value = true
     if (filterChatId(data.message.id).length < 1) {
