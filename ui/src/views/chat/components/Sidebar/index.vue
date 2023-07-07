@@ -1,39 +1,55 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useChatStore } from '@/store'
 
-const active = ref(false)
-const sessions = reactive([
-  {
-    id: 1,
-    message: {
-      content: '你好',
-      role: 'user',
-      create_time: '2021-08-01 12:00:00'
-    }
-  },
-  {
-    id: 2,
-    message: {
-      content: '阿哈阿',
-      role: 'user',
-      create_time: '2021-08-01 13:00:00'
-    }
+const chatStore = useChatStore()
+const tabNum = computed(() => chatStore.tabNum)
+const sessions = computed(() => chatStore.sessionsStore)
+
+const onNewChat = () => {
+  chatStore.setTabNum()
+  const data = {
+    id: tabNum.value,
+    name: 'new chat ' + tabNum.value,
+    chats: []
   }
-])
+  chatStore.addSessionsStore(data)
+  console.log('sessions: ===============', sessions.value)
+}
+
+const switchTab = (id) => {
+  chatStore.setActiveNum(id)
+}
+
+const onDelete = (id) => {
+  chatStore.removeSessionsStore(id)
+}
+
+onMounted(() => {
+  if (sessions.value.length < 1) {
+    onNewChat()
+  }
+})
 
 </script>
 <template>
   <div class="box-border">
-    <n-button type="primary" dashed class="mb-16px w-1/1">
+    <n-button type="primary" dashed class="mb-16px w-1/1" @click="onNewChat">
       新建聊天
     </n-button>
-    <div  v-for="(item) in sessions" class="card">
+    <div 
+      v-for="(item, index) in sessions"
+      :key="index"
+      class="card"
+      :class="[tabNum === item.id ? 'bg-gray-100' : '']"
+      @click="switchTab(item.id)"
+    >
       <span class="title">
         <i class="fa fa-commenting-o mr-8px"></i>
-        <span>{{ item.message.content }}</span>
+        <span>{{ item.name }}</span>
       </span>
       <span class="action">
-        <i class="fa fa-trash-o"></i>
+        <i class="fa fa-trash-o" @click="onDelete(item.id)"></i>
       </span>
     </div>
   </div>
