@@ -63,7 +63,6 @@ class ReplayHandler(BaseWisp):
     def upload(self):
         try:
             self.file_writer.close()
-
             replay_request = service_pb2.ReplayRequest(
                 session_id=self.session.id,
                 replay_file_path=self.file.absolute().as_posix()
