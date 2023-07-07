@@ -1,5 +1,6 @@
 import uuid
 import time
+import json
 import asyncio
 
 from typing import Optional
@@ -135,13 +136,29 @@ async def chat(websocket: WebSocket, jms_session: str = Depends(create_jms_sessi
 
     try:
         history_asks = []
+
         while True:
-            params = await websocket.receive_json()
+            websocket_receive = await websocket.receive()
+            tp = websocket_receive['type']
+            if tp == 'websocket.receive':
+                try:
+                    params = json.loads(websocket_receive["text"])
+                except json.JSONDecodeError:
+                    await websocket.send_text("pong")
+                    continue
+            elif tp == "websocket.connect":
+                await websocket.send_text("pong")
+                continue
+            else:
+                # 处理 WebSocket 断开连接的情况
+                print('---websocket.disconnect---')
+                raise WebSocketDisconnect
+
             try:
                 ask_request = AskRequest(**params)
             except ValidationError as e:
                 logger.warning(f"Invalid ask request: {e}")
-                await reply(AskResponse(type=AskResponseType.error, system_message=str(e)))
+                await reply(websocket, AskResponse(type=AskResponseType.error, system_message=str(e)))
                 await websocket.close(WSStatusCode.data_error.value, "invalidAskRequest")
                 return
 
@@ -153,7 +170,6 @@ async def chat(websocket: WebSocket, jms_session: str = Depends(create_jms_sessi
                 #     chat_func(ask_request, history_asks)
                 # )
                 last_content = await chat_func(ask_request, history_asks)(websocket)
-                print('------', last_content)
             except Exception as e:
                 logger.error(str(e))
                 await reply(
@@ -163,5 +179,5 @@ async def chat(websocket: WebSocket, jms_session: str = Depends(create_jms_sessi
                     )
                 )
                 await websocket.close(WSStatusCode.server_error.value, 'unknownError')
-    except WebSocketDisconnect:
+    except WebSocketDisconnect as e:
         logger.error('Web socket disconnect')

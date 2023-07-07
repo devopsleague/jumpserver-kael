@@ -8,12 +8,13 @@ from wisp import shutdown_protobuf
 
 from api.conf import settings
 from api.middlewares import RequestMiddleware
-from api.routers import chat
+from api.routers import chat, health
 from jms.poll import setup_poll_jms_event
 
 app = FastAPI()
 
-app.include_router(chat.router)
+app.include_router(chat.router, prefix="/kael")
+app.include_router(health.router, prefix="/kael")
 
 app.add_middleware(
     CORSMiddleware,
