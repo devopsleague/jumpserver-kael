@@ -1,8 +1,6 @@
-import uuid
 import asyncio
 from typing import Optional
 from starlette.websockets import WebSocket
-
 
 from datetime import datetime
 from jms.base import BaseWisp
@@ -10,44 +8,47 @@ from jms.base import BaseWisp
 from wisp.protobuf import service_pb2
 from wisp.protobuf.common_pb2 import TokenAuthInfo, Session
 
-from .manager import SessionManager
 from ..replay import ReplayHandler
 from ..command import CommandHandler, CommandRecord
 
 
 class JMSSession(BaseWisp):
-    def __init__(self, session: Session, token_resp: TokenAuthInfo):
+    def __init__(self, session: Session, auth_info: TokenAuthInfo, websocket: WebSocket):
         super().__init__()
         self.session = session
-        self.command_acls = list(token_resp.filter_rules)
-        self.expire_time = token_resp.expire_info.expire_at
-        self.max_idle_time_delta = token_resp.setting.max_idle_time
+        self.websocket = websocket
+        self.history_asks = []
+        self.current_ask_interrupt = False
+        self.command_acls = list(auth_info.filter_rules)
+        self.expire_time = auth_info.expire_info.expire_at
+        self.max_idle_time_delta = auth_info.setting.max_idle_time
         self.session_handler = None
         self.command_handler = None
         self.replay_handler = None
 
     def active_session(self) -> None:
-        SessionManager.register_session(self.session)
-        self.session_handler = SessionHandler()
-        self.command_handler = CommandHandler(self.session, self.command_acls)
+        from .manager import SessionManager
+        SessionManager.register_jms_session(self)
+        self.session_handler = SessionHandler(self.websocket)
+        self.command_handler = CommandHandler(self.websocket, self.session, self.command_acls)
         self.replay_handler = ReplayHandler(self.session)
 
     def close(self) -> None:
+        from .manager import SessionManager
         self.replay_handler.upload()
         self.session_handler.close_session(self.session)
+        SessionManager.unregister_jms_session(self)
 
-    async def with_audit(self, command: str, websocket: WebSocket, conversation_id: Optional[uuid.UUID], chat_func):
+    async def with_audit(self, command: str, chat_func):
         loop = asyncio.get_event_loop()
         command_record = CommandRecord(input=command)
         try:
-            self.command_handler.websocket = websocket
-            self.command_handler.conversation_id = conversation_id
             is_continue = self.command_handler.command_acl_filter(command_record)
             loop.run_in_executor(None, self.replay_handler.write_input, command_record.input)
             if not is_continue:
                 return
 
-            result = await chat_func(websocket)
+            result = await chat_func(self)
             command_record.output = result
             loop.run_in_executor(None, self.replay_handler.write_input, result.output)
             return result
@@ -63,39 +64,33 @@ class JMSSession(BaseWisp):
 
 class SessionHandler(BaseWisp):
 
-    def create_new_session(self, token) -> JMSSession:
-        token_resp = self.get_token_auth_info(token)
-        jms_session = self.create_session(token_resp)
+    def __init__(self, websocket: Optional[WebSocket] = None):
+        super().__init__()
+        self.websocket = websocket
+
+    def create_new_session(self, auth_info: TokenAuthInfo) -> JMSSession:
+        session = self.create_session(auth_info)
 
         try:
             # TODO 要不要看一下 secret 能不能连上
             pass
         except Exception as e:
-            self.close_session(jms_session)
+            self.close_session(session)
             raise e
 
-        return JMSSession(jms_session, token_resp)
+        return JMSSession(session, auth_info, self.websocket)
 
-    def get_token_auth_info(self, token: str) -> TokenAuthInfo:
-        req = service_pb2.TokenRequest(token=token)
-        token_resp = self.stub.GetTokenAuthInfo(req)
-        if not token_resp.status.ok:
-            error = token_resp.status.err
-            print('获取 token 失败', error)
-
-        return token_resp.data
-
-    def create_session(self, token_resp: TokenAuthInfo) -> Session:
+    def create_session(self, auth_info: TokenAuthInfo) -> Session:
         req_session = Session(
-            user_id=token_resp.user.id,
-            user=f"{token_resp.user.name}({token_resp.user.username})",
-            account_id=token_resp.account.id,
-            account=f"{token_resp.account.name}({token_resp.account.username})",
-            org_id=token_resp.asset.org_id,
-            asset_id=token_resp.asset.id,
-            asset=token_resp.asset.name,
+            user_id=auth_info.user.id,
+            user=f"{auth_info.user.name}({auth_info.user.username})",
+            account_id=auth_info.account.id,
+            account=f"{auth_info.account.name}({auth_info.account.username})",
+            org_id=auth_info.asset.org_id,
+            asset_id=auth_info.asset.id,
+            asset=auth_info.asset.name,
             login_from=Session.LoginFrom.WT,
-            protocol=token_resp.asset.protocols[0].name,
+            protocol=auth_info.asset.protocols[0].name,
             date_start=int(datetime.now().timestamp())
         )
         req = service_pb2.SessionCreateRequest(data=req_session)
