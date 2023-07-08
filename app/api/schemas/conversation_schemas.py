@@ -14,7 +14,6 @@ logger = get_logger(__name__)
 class AskRequest(BaseModel):
     conversation_id: Optional[uuid.UUID] = None
     content: str
-    parent: Optional[uuid.UUID] = None
 
 
 class AskResponseType(StrEnum):
