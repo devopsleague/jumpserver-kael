@@ -4,9 +4,12 @@ from pathlib import Path
 from api import globals
 from jms.base import BaseWisp
 from wisp.protobuf import service_pb2
+from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import Session
-
+from utils.logger import get_logger
 from .asciinema import AsciinemaWriter
+
+logger = get_logger(__name__)
 
 
 class ReplayHandler(BaseWisp):
@@ -37,7 +40,8 @@ class ReplayHandler(BaseWisp):
             self.replay_writer = AsciinemaWriter(self.file_writer)
             self.replay_writer.write_header()
         except Exception as e:
-            print(file.name, f"create replay file error: {str(e)}")
+            error_message = f'Failed to create replay file: {file.name} -> {e}'
+            logger.error(error_message)
 
     def ensure_replay_dir(self):
         os.makedirs(self.REPLAY_DIR, exist_ok=True)
@@ -50,9 +54,10 @@ class ReplayHandler(BaseWisp):
         try:
             self.replay_writer.write_row(row.encode(self.DEFAULT_ENCODING))
         except Exception as e:
-            print(f"write replay row failed: {str(e)}")
+            error_message = f'Failed to write replay row: {e}'
+            logger.error(error_message)
 
-    def write_input(self, input_str):
+    async def write_input(self, input_str):
         input_str = f"[Input]: \r\n {input_str}"
         self.write_row(input_str)
 
@@ -70,6 +75,8 @@ class ReplayHandler(BaseWisp):
             resp = self.stub.UploadReplayFile(replay_request)
 
             if not resp.status.ok:
-                print('录像文件上传失败', self.file.name, resp.status.err)
+                error_message = f'Failed to upload replay file: {self.file.name} {resp.status.err}'
+                logger.error(error_message)
+                raise WispError(error_message)
         except Exception as e:
-            print('录像文件上传失败-未知错误', self.file.name, f"close replay file error: {str(e)}")
+            logger.error(f'Failed to upload replay file upload {e}')

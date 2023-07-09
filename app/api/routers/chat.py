@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from typing import Optional
 from fastapi import APIRouter, Depends
@@ -12,6 +13,7 @@ from api.message import ChatGPTMessage, Conversation
 from api.schemas import AskRequest, AskResponse, AskResponseType
 from jms import SessionHandler, JMSSession, TokenHandler, SessionManager
 from wisp.protobuf.common_pb2 import TokenAuthInfo
+from wisp.exceptions import WispError
 
 from utils import reply
 from utils.logger import get_logger
@@ -38,7 +40,7 @@ async def interrupt_current_ask(conversation: Conversation):
 
 
 async def create_auth_info(token: Optional[str] = None):
-    return 'test'
+    return 'create_auth_info'
 
 
 @router.websocket("/chat")
@@ -62,49 +64,56 @@ async def chat(websocket: WebSocket, auth_info: str = Depends(create_auth_info))
                 logger.warning(f"Invalid ask request: {e}")
                 await reply(websocket, AskResponse(type=AskResponseType.error, system_message=str(e)))
                 continue
+            # try:
+            #     if ask_request.conversation_id is None:
+            #         jms_session = session_handler.create_new_session(auth_info)
+            #         jms_session.active_session()
+            #         current_jms_sessions.append(jms_session)
+            #     else:
+            #         conversation_id = ask_request.conversation_id
+            #         jms_session = SessionManager.get_jms_session(conversation_id)
+            #         if jms_session is None:
+            #             await reply(
+            #                 websocket,
+            #                 AskResponse(
+            #                     type=AskResponseType.error,
+            #                     system_message='Not found session id'
+            #                 )
+            #             )
+            #             continue
+            #
+            #     await jms_session.with_audit(
+            #         ask_request.content,
+            #         chat_func(ask_request)
+            #     )
+            # except WispError as e:
+            #     logger.error(e)
 
             if ask_request.conversation_id is None:
-                jms_session = session_handler.create_new_session(auth_info)
-                jms_session.active_session()
-                current_jms_sessions.append(current_jms_sessions)
+                conversation_id = f'{uuid.uuid4()}'
             else:
                 conversation_id = ask_request.conversation_id
-                jms_session = SessionManager.get_jms_session(conversation_id)
-                assert isinstance(jms_session, JMSSession)
-
-            await jms_session.with_audit(
-                ask_request.content,
-                chat_func(ask_request)
-            )
-            # await chat_func(ask_request, history_asks)(conversation_id, websocket)
+            await chat_func(ask_request, conversation_id)(websocket)
 
     except WebSocketDisconnect as e:
         logger.error('Web socket disconnect', e)
         for jms_session in current_jms_sessions:
-            SessionManager.unregister_jms_session(jms_session)
+            jms_session.close()
 
 
-def chat_func(ask_request: AskRequest):
+def chat_func(ask_request: AskRequest, conversation_id):
     manager = ChatGPTManager()
 
-    async def inner(jms_session: JMSSession):
-        websocket = jms_session.websocket
-        conversation_id = jms_session.session.id
-        history_asks = jms_session.history_asks
+    async def inner(websocket):
         last_content = ''
-        async for data in manager.ask(
+        async for message in manager.ask(
                 content=ask_request.content,
                 conversation_id=conversation_id,
-                history_asks=history_asks
+                history_asks=[]
         ):
 
-            if jms_session.current_ask_interrupt:
-                jms_session.current_ask_interrupt = False
-                break
-
             try:
-                assert isinstance(data, ChatGPTMessage)
-                message = data
+                assert isinstance(message, ChatGPTMessage)
                 last_content = message.content
             except Exception as e:
                 logger.warning(f"convert message error: {e}")
@@ -126,3 +135,45 @@ def chat_func(ask_request: AskRequest):
         return last_content
 
     return inner
+
+# def chat_func(ask_request: AskRequest):
+#     manager = ChatGPTManager()
+#
+#     async def inner(jms_session: JMSSession):
+#         websocket = jms_session.websocket
+#         conversation_id = jms_session.session.id
+#         history_asks = jms_session.history_asks
+#         last_content = ''
+#         async for message in manager.ask(
+#                 content=ask_request.content,
+#                 conversation_id=conversation_id,
+#                 history_asks=history_asks
+#         ):
+#
+#             if jms_session.current_ask_interrupt:
+#                 jms_session.current_ask_interrupt = False
+#                 break
+#
+#             try:
+#                 assert isinstance(message, ChatGPTMessage)
+#                 last_content = message.content
+#             except Exception as e:
+#                 logger.warning(f"convert message error: {e}")
+#                 continue
+#
+#             await reply(
+#                 websocket, AskResponse(
+#                     type=AskResponseType.message,
+#                     conversation_id=conversation_id,
+#                     message=message
+#                 )
+#             )
+#         await reply(
+#             websocket, AskResponse(
+#                 type=AskResponseType.finish,
+#                 conversation_id=conversation_id
+#             )
+#         )
+#         return last_content
+#
+#     return inner

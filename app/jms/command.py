@@ -8,8 +8,12 @@ from starlette.websockets import WebSocket
 from jms.base import BaseWisp
 from api.schemas import AskResponse, AskResponseType
 from wisp.protobuf import service_pb2
+from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import Session, CommandACL, RiskLevel
 from utils import reply
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class CommandRecord(BaseModel):
@@ -29,7 +33,7 @@ class CommandHandler(BaseWisp):
         self.websocket = websocket
         self.command_acls = command_acls
 
-    def record_command(self, command_record: CommandRecord):
+    async def record_command(self, command_record: CommandRecord):
         req = service_pb2.CommandRequest(
             sid=self.session.id,
             org_id=self.session.org_id,
@@ -43,8 +47,9 @@ class CommandHandler(BaseWisp):
         )
         resp = self.stub.UploadCommand(req)
         if not resp.status.ok:
-            error = resp.status.err
-            print('上传命令记录失败', error)
+            error_message = f'Failed to upload command: {resp.status.err}'
+            logger.error(error_message)
+            raise WispError(error_message)
 
     def match_rule(self, command: str):
         for command_acl in self.command_acls:
@@ -57,7 +62,10 @@ class CommandHandler(BaseWisp):
                     if pattern.search(command.lower()) is not None:
                         return command_acl
                 except re.error as e:
-                    print("invalid pattern: " + command_group.pattern, e)
+                    error_message = f'Failed to re invalid pattern: {command_group.pattern} {e}'
+                    logger.error(error_message)
+                    # TODO Exception
+                    raise Exception(error_message)
 
     async def create_and_wait_ticket(self, command: str, command_acl: CommandACL) -> bool:
         req = service_pb2.CommandConfirmRequest(
@@ -67,7 +75,9 @@ class CommandHandler(BaseWisp):
         )
         resp = self.stub.CreateCommandTicket(req)
         if not resp.status.ok:
-            print("创建命令工单失败: " + resp.status.err)
+            error_message = f'Failed to create ticket: {resp.status.err}'
+            logger.error(error_message)
+            raise WispError(error_message)
 
         return await self.wait_for_ticket_status_change(resp.info)
 
@@ -86,13 +96,14 @@ class CommandHandler(BaseWisp):
         is_continue = False
         while time.time() <= end_time:
             check_request = service_pb2.TicketRequest(req=ticket_info.check_req)
-            check_response = self.stub.CheckTicketState(check_request)
+            check_response: service_pb2.TicketStateResponse = self.stub.CheckTicketState(check_request)
 
             if not check_response.status.ok:
-                print("Failed to check ticket status: " + check_response.status.err)
+                error_message = f'Failed to check ticket status: {check_response.status.err}'
+                logger.error(error_message)
                 break
 
-            state = check_response.data.state
+            state = check_response.Data.state
             if state == service_pb2.TicketState.Approved:
                 is_continue = True
                 ticket_closed = True
@@ -141,5 +152,5 @@ class CommandHandler(BaseWisp):
         req = service_pb2.TicketRequest(req=ticket_info.cancel_req)
         resp = self.stub.CancelTicket(req)
         if not resp.status.ok:
-            error = resp.status.err
-            print('关闭工单失败', error)
+            error_message = f'Failed to close ticket: {resp.status.err}'
+            logger.error(error_message)

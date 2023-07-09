@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 
 
 class AskRequest(BaseModel):
-    conversation_id: Optional[uuid.UUID] = None
+    conversation_id: Optional[str] = None
     content: str
 
 
@@ -26,6 +26,6 @@ class AskResponseType(StrEnum):
 
 class AskResponse(BaseModel):
     type: AskResponseType
-    conversation_id: uuid.UUID = None
+    conversation_id: Optional[str] = None
     message: Optional[ChatGPTMessage] = None
     system_message: str = None

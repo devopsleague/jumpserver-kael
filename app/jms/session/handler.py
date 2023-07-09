@@ -6,10 +6,13 @@ from datetime import datetime
 from jms.base import BaseWisp
 
 from wisp.protobuf import service_pb2
+from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import TokenAuthInfo, Session
-
+from utils.logger import get_logger
 from ..replay import ReplayHandler
 from ..command import CommandHandler, CommandRecord
+
+logger = get_logger(__name__)
 
 
 class JMSSession(BaseWisp):
@@ -35,31 +38,31 @@ class JMSSession(BaseWisp):
 
     def close(self) -> None:
         from .manager import SessionManager
+        self.current_ask_interrupt = True
         self.replay_handler.upload()
         self.session_handler.close_session(self.session)
         SessionManager.unregister_jms_session(self)
 
     async def with_audit(self, command: str, chat_func):
-        loop = asyncio.get_event_loop()
         command_record = CommandRecord(input=command)
         try:
             is_continue = self.command_handler.command_acl_filter(command_record)
-            loop.run_in_executor(None, self.replay_handler.write_input, command_record.input)
+            asyncio.create_task(self.replay_handler.write_input(command_record.input))
             if not is_continue:
                 return
 
             result = await chat_func(self)
             command_record.output = result
-            loop.run_in_executor(None, self.replay_handler.write_input, result.output)
+            asyncio.create_task(self.replay_handler.write_input(result.output))
             return result
 
         except Exception as e:
-            command_record.error = str(e)
-            loop.run_in_executor(None, self.replay_handler.write_input, str(e))
+            error = str(e)
+            asyncio.create_task(self.replay_handler.write_input(error))
             raise e
 
         finally:
-            loop.run_in_executor(None, self.command_handler.record_command, command_record)
+            asyncio.create_task(self.command_handler.record_command(command_record))
 
 
 class SessionHandler(BaseWisp):
@@ -96,8 +99,9 @@ class SessionHandler(BaseWisp):
         req = service_pb2.SessionCreateRequest(data=req_session)
         resp = self.stub.CreateSession(req)
         if not resp.status.ok:
-            error = resp.status.err
-            print('创建 session 失败', error)
+            error_message = f'Failed to create session: {resp.status.err}'
+            logger.error(error_message)
+            raise WispError(error_message)
         return resp.data
 
     def close_session(self, session: Session) -> None:
@@ -105,7 +109,9 @@ class SessionHandler(BaseWisp):
             id=session.id,
             date_end=int(datetime.now().timestamp())
         )
-        resp = self.stub.finish_session(req)
+        resp = self.stub.FinishSession(req)
 
         if not resp.status.ok:
-            print("关闭会话失败: ", resp.status.err)
+            error_message = f'Failed to close session: {resp.status.err}'
+            logger.error(error_message)
+            raise WispError(error_message)
