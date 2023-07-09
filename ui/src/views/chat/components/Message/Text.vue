@@ -11,7 +11,7 @@ const props = defineProps({
   error: String
 })
 
-const { message, asRawText } = toRefs(props)
+const { error } = toRefs(props)
 const role = props.message?.role !== 'assistant'
 
 const textRef = ref()
@@ -40,13 +40,14 @@ const wrapClass = computed(() => {
     role ? 'bg-[#d2f9d1]' : 'bg-[#f4f6f8]',
     role ? 'dark:bg-[#a1dc95]' : 'dark:bg-[#1e1e20]',
     role ? 'message-request' : 'message-reply',
-    { 'text-red-500': props.message?.error },
+    error.value ? 'text-red-500' : ''
   ]
 })
 
 const text = computed(() => {
   const value = props.message?.content ?? ''
-  if (!props.message) {
+  console.log('value: ', value);
+  if (props.message?.content) {
     return mdi.render(value)
   }
   return value
@@ -92,10 +93,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="text-black" :class="wrapClass">
+  <div :class="wrapClass">
     <div ref="textRef" class="leading-relaxed break-words">
-      <div v-if="!asRawText" class="markdown-body" v-html="text" />
-      <div v-else class="whitespace-pre-wrap" v-text="text" />
+      <div class="markdown-body" v-html="text" />
     </div>
   </div>
 </template>

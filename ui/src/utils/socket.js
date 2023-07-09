@@ -2,7 +2,7 @@ import { useChatStore } from '@/store'
 
 let ws= null; // 建立的连接
 let lockReconnect= false; // 是否真正建立连接
-let timeout= 10 * 1000; // 30秒一次心跳
+let timeout= 1 * 1000; // 30秒一次心跳
 let timeoutObj= null; // 心跳心跳倒计时
 let serverTimeoutObj= null; // 心跳倒计时
 let timeoutNum= null; // 断开 重连倒计时
@@ -59,10 +59,11 @@ export function onClose(){
   console.log('连接关闭')
   const chat = {
     message: {
-      content: '连接已关闭',
+      content: '连接已断开',
       role: 'assistant',
       create_time: new Date()
-    }
+    },
+    error: 'error'
   }
   chatStore.addChatsById(chat)
 }
