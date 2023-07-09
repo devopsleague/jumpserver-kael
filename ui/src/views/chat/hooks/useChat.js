@@ -1,16 +1,22 @@
 import { useChatStore } from '@/store'
-
+import { pageScroll } from '@/utils/common'
 
 export function useChat() {
   const chatStore = useChatStore()
 
-  const addChatConversationById = (chat) => {
-    chatStore.filterChatId()
-    chatStore.addChatsById(chat)
+  const setLoading = (loading) => {
+    chatStore.setLoading(loading)
   }
 
-  const addChatConversationContentById = (id, content) => {
-    chatStore.addChatConversationContentById(id, content)
+  const addChatConversationById = (chat) => {
+    chatStore.filterCurrentChat()
+    chatStore.addChatsById(chat)
+    pageScroll('scrollRef')
+  }
+
+  const updateChatConversationContentById = (id, content) => {
+    chatStore.updateChatConversationContentById(id, content)
+    pageScroll('scrollRef')
   }
 
   const hasChat = (id) => {
@@ -25,7 +31,8 @@ export function useChat() {
   return {
     chatStore,
     hasChat,
+    setLoading,
     addChatConversationById,
-    addChatConversationContentById
+    updateChatConversationContentById
   }
 }
