@@ -23,12 +23,11 @@ class CommandHandler(BaseWisp):
     WAIT_TICKET_TIMEOUT = 60 * 3
     WAIT_TICKET_INTERVAL = 3
 
-    def __init__(self, session: Session, command_acls: List[CommandACL]):
+    def __init__(self, websocket: WebSocket, session: Session, command_acls: List[CommandACL]):
         super().__init__()
         self.session = session
+        self.websocket = websocket
         self.command_acls = command_acls
-        self.websocket: Optional[WebSocket] = None
-        self.conversation_id = None
 
     def record_command(self, command_record: CommandRecord):
         req = service_pb2.CommandRequest(
@@ -59,9 +58,8 @@ class CommandHandler(BaseWisp):
                         return command_acl
                 except re.error as e:
                     print("invalid pattern: " + command_group.pattern, e)
-        return
 
-    def create_and_wait_ticket(self, command: str, command_acl: CommandACL) -> bool:
+    async def create_and_wait_ticket(self, command: str, command_acl: CommandACL) -> bool:
         req = service_pb2.CommandConfirmRequest(
             cmd=command,
             session_id=self.session.id,
@@ -71,14 +69,13 @@ class CommandHandler(BaseWisp):
         if not resp.status.ok:
             print("创建命令工单失败: " + resp.status.err)
 
-        return self.wait_for_ticket_status_change(resp.info)
+        return await self.wait_for_ticket_status_change(resp.info)
 
-    # TODO 还有一些问题没解决 函数暂时用不了
-    def wait_for_ticket_status_change(self, ticket_info: service_pb2.TicketInfo):
-        reply(
+    async def wait_for_ticket_status_change(self, ticket_info: service_pb2.TicketInfo):
+        await reply(
             self.websocket, AskResponse(
                 type=AskResponseType.waiting,
-                conversation_id=self.conversation_id,
+                conversation_id=self.session.id,
                 system_message=f'等待工单审批: {ticket_info.ticket_detail_url}'
             )
         )
@@ -102,10 +99,10 @@ class CommandHandler(BaseWisp):
                 break
             elif state in [service_pb2.TicketState.Rejected, service_pb2.TicketState.Closed]:
                 ticket_closed = True
-                reply(
+                await reply(
                     self.websocket, AskResponse(
                         type=AskResponseType.waiting,
-                        conversation_id=self.conversation_id,
+                        conversation_id=self.session.id,
                         system_message=f'工单关闭或拒绝'
                     )
                 )
@@ -118,16 +115,16 @@ class CommandHandler(BaseWisp):
 
         return is_continue
 
-    def command_acl_filter(self, command: CommandRecord):
+    async def command_acl_filter(self, command: CommandRecord):
         is_continue = False
         acl = self.match_rule(command.input)
         if acl is not None:
             command.risk_level = RiskLevel.Danger
             if acl.action == CommandACL.Reject:
-                reply(
+                await reply(
                     self.websocket, AskResponse(
                         type=AskResponseType.reject,
-                        conversation_id=self.conversation_id,
+                        conversation_id=self.session.id,
                         system_message=self.REJECT_MESSAGE
                     )
                 )

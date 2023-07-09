@@ -19,10 +19,11 @@ jobs:
       with:
         context: .
         push: false
-        tags: jumpserver/magnus:test
+        tags: jumpserver/kael:test
         build-args: |
           GOPROXY=direct
           APT_MIRROR=http://deb.debian.org
+          PIP_MIRROR=https://pypi.org/simple
         file: Dockerfile
         cache-from: type=gha
         cache-to: type=gha,mode=max
