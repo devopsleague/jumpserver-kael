@@ -15,7 +15,6 @@ const onNewChat = () => {
     chats: []
   }
   chatStore.addSessionsStore(data)
-  console.log('sessions: ===============', sessions.value)
 }
 
 const switchTab = (id) => {
@@ -42,7 +41,7 @@ onMounted(() => {
     <div 
       v-for="(item, index) in sessions"
       :key="index"
-      class="card"
+      class="card hover:bg-neutral-100 dark:hover:bg-[#24272e] border-[#e5e7eb] dark:border-neutral-800"
       :class="[activeTab === item.id ? 'active-tab' : '']"
       @click="switchTab(item.id)"
     >
@@ -64,12 +63,8 @@ onMounted(() => {
   height: 46px;
   padding: 12px;
   margin-bottom: 8px;
-  border: 1px solid #e5e7eb;
+  // border: 1px solid #e5e7eb;
   border-radius: 6px;
-  &:hover {
-    border-color: #d2d6dc;
-    background-color: rgb(245 245 245 / 1);
-  }
   .title {
     flex: 1;
     overflow: hidden;
@@ -79,9 +74,6 @@ onMounted(() => {
 }
 .active-tab {
   border-color: #36ad6a;
-  background-color: rgb(245 245 245 / 1);
-  &:hover {
-    border-color: #36ad6a;
-  }
+  background-color: rgba(36, 39, 46, 1);
 }
 </style>

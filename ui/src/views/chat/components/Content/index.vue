@@ -16,6 +16,7 @@ const currentSessionStore = computed(() => {
 })
 
 const onWebSocketMessage = (data) => {
+  console.log('data: -----------------', data)
   if (data.type === 'message') {
     loading.value = true
     
@@ -80,7 +81,7 @@ onUnmounted(() => {
             <Message
               v-for="(item, index) of currentSessionStore.chats"
               :key="index"
-              :loading="loading"
+              :item="item"
               :message="item.message"
               @delete="handleDelete(index)"
             />
@@ -121,16 +122,5 @@ onUnmounted(() => {
   flex-direction: column;
   width: 100%;
   height: 100%;
-}
-main {
-  &::-webkit-scrollbar {
-    background-color: transparent;
-    width: 8px;
-  }
-  &::-webkit-scrollbar-thumb {
-    border-radius: 8px;
-    box-shadow: inset 8px 10px 10px #c6c6c6;
-    border: 1px solid rgba(0,0,0,0);
-  }
 }
 </style>

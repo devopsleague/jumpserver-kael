@@ -8,8 +8,8 @@ window.$message = useMessage()
 </script>
 
 <template>
-  <div class="root">
-    <n-layout has-sider class="root-layout">
+  <div class="root dark:bg-[#24272e]">
+    <n-layout has-sider class="root-layout border border-zinc-200 dark:border-neutral-700">
       <n-layout-sider
         collapse-mode="width"
         :collapsed-width="0"
@@ -30,13 +30,14 @@ window.$message = useMessage()
 <style lang="scss" scoped>
 .root {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   padding: 20px;
   box-sizing: border-box;
 }
 .root-layout {
   height: 100%;
-  border: 1px solid #e5e7eb;
+  // border: 1px solid;
+  // border-color: #e5e7eb;
   border-radius: 6px;
 } 
 </style>

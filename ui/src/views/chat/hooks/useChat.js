@@ -1,23 +1,20 @@
-import { ref, reactive } from 'vue'
 import { useChatStore } from '@/store'
 
 
 export function useChat() {
-  const chatStore1 = useChatStore()
-  const chatStore = reactive({})
-  let activeId = ref(1)
+  const chatStore = useChatStore()
 
   const addChatConversationById = (chat) => {
-    chatStore1.filterChatId()
-    chatStore1.addChatsById(chat)
+    chatStore.filterChatId()
+    chatStore.addChatsById(chat)
   }
 
   const addChatConversationContentById = (id, content) => {
-    chatStore1.addChatConversationContentById(id, content)
+    chatStore.addChatConversationContentById(id, content)
   }
 
   const hasChat = (id) => {
-    const chats = chatStore1.filterChat.chats
+    const chats = chatStore.filterChat.chats
     const filterChat = chats.filter((chat) => chat.message.id === id)
     if (filterChat.length > 0) {
       return false
@@ -27,7 +24,6 @@ export function useChat() {
 
   return {
     chatStore,
-    activeId,
     hasChat,
     addChatConversationById,
     addChatConversationContentById
