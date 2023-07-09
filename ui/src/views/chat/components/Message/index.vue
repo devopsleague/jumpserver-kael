@@ -74,7 +74,7 @@ const options = computed(() => {
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .avatar {
   width: 34px;
   height: 34px;
@@ -82,6 +82,13 @@ const options = computed(() => {
     width: 100%;
     height: 100%;
     border-radius: 50% !important;
+  }
+}
+.message {
+  & > div {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
   }
 }
 </style>
