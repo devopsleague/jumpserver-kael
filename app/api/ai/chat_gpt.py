@@ -14,14 +14,12 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-api_key = settings.chat_gpt.api_key
 
-
-def make_session() -> httpx.AsyncClient:
+def make_session(proxy: Optional[str] = None) -> httpx.AsyncClient:
     if settings.chat_gpt.proxy is not None:
         proxies = {
-            "http://": settings.chat_gpt.proxy,
-            "https://": settings.chat_gpt.proxy,
+            'http://': proxy or settings.chat_gpt.proxy,
+            'https://': proxy or settings.chat_gpt.proxy,
         }
         session = httpx.AsyncClient(proxies=proxies, timeout=None)
     else:
@@ -31,8 +29,9 @@ def make_session() -> httpx.AsyncClient:
 
 class ChatGPTManager:
 
-    def __init__(self):
-        self.session = make_session()
+    def __init__(self, proxy: Optional[str] = None):
+        self.session = make_session(proxy)
+        self.api_key = None
 
     async def ask(
             self, content: str, history_asks: list = None,
@@ -54,14 +53,14 @@ class ChatGPTManager:
             "stream": True,
             **(extra_args or {})
         }
-        print('data', data)
+
         text_content = ''
         reply_message = None
 
         read_timeout = settings.chat_gpt.read_timeout
         connect_timeout = settings.chat_gpt.connect_timeout
         timeout = httpx.Timeout(read_timeout, connect=connect_timeout)
-
+        api_key = self.api_key or settings.chat_gpt.api_key
         async with self.session.stream(
                 method="POST",
                 url=f"{base_url}chat/completions",
