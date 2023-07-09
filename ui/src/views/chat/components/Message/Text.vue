@@ -4,7 +4,9 @@ import MarkdownIt from 'markdown-it'
 import mdKatex from '@traptitech/markdown-it-katex'
 import mila from 'markdown-it-link-attributes'
 import hljs from 'highlight.js'
+import { useChatStore } from '@/store'
 
+const chatStore = useChatStore()
 const props = defineProps({
   message: Object,
   asRawText: Boolean,
@@ -12,9 +14,11 @@ const props = defineProps({
 })
 
 const { error } = toRefs(props)
-const role = props.message?.role !== 'assistant'
-
 const textRef = ref()
+const role = props.message?.role !== 'assistant'
+const loading = computed(() => {
+  return chatStore.loading.value
+})
 
 const mdi = new MarkdownIt({
   html: false,
@@ -95,17 +99,35 @@ onUnmounted(() => {
 <template>
   <div :class="wrapClass">
     <div ref="textRef" class="leading-relaxed break-words">
-      <div class="markdown-body" v-html="text" />
+      <div class="inline-block markdown-body" v-html="text" />
+      <span v-if="loading" class="heart"></span>
     </div>
   </div>
 </template>
 
-<style lang="scss">
-.message {
-  & > div {
-    display: inline-block;
-    padding: 6px 10px;
-    border-radius: 6px;
+<style lang="scss" scoped>
+.heart {
+  display: inline-block;
+  height: 13px;
+  margin-left: 2px;
+  vertical-align: middle;
+  border-left: 2px solid rgb(182, 189, 198);
+  animation: heartbeat 1s infinite;
+}
+
+@keyframes heartbeat {
+  0% {
+    transform: scale(1, 1);
+    opacity: 1;
+  }
+  25% {
+    transform: scale(1, 1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1, 1);
+    opacity: 1;
   }
 }
+
 </style>

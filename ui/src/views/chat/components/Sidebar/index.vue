@@ -73,6 +73,7 @@ onMounted(() => {
   padding: 12px;
   margin-bottom: 8px;
   border-radius: 6px;
+  cursor: pointer;
   .title {
     flex: 1;
     overflow: hidden;
