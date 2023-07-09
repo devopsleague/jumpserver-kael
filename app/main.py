@@ -29,7 +29,8 @@ app.add_middleware(RequestMiddleware)
 
 def startup_event():
     setup_logger()
-    # setup_poll_jms_event()
+    setup_poll_jms_event()
+    print('-----------')
 
 
 def shutdown_event():

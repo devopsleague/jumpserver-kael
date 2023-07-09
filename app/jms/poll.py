@@ -1,12 +1,13 @@
 import os
 import queue
-import asyncio
+import threading
 
 from api import globals
 from jms.base import BaseWisp
 from wisp.protobuf import service_pb2
+from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import KillSession
-from .session import SessionManager, JMSSession
+from jms.session import JMSSession
 
 from utils.logger import get_logger
 
@@ -20,13 +21,17 @@ class PollJMSEvent(BaseWisp):
         req = service_pb2.RemainReplayRequest(replay_dir=replay_dir)
         resp = self.stub.ScanRemainReplays(req)
         if not resp.status.ok:
-            logger.error(f"Scan remain replay error: {resp.status.err}")
+            error_message = f'Failed to scan remain replay: {resp.status.err}'
+            logger.error(error_message)
+            raise WispError(error_message)
         else:
-            print("Scan remain replay success")
+            logger.info('Scan remain replay success')
 
     def wait_for_kill_session_message(self):
-        resp = self.stub.DispatchTask(iter(queue.Queue(maxsize=1000).get, None))
-        for task in resp:
+        from jms.session import SessionManager
+        q = queue.Queue(maxsize=1000)
+        for resp in self.stub.DispatchTask(iter(q.get, None)):
+            task = resp.task
             task_id = task.id
             session_id = task.session_id
             task_action = task.action
@@ -38,29 +43,18 @@ class PollJMSEvent(BaseWisp):
             if target_session is not None:
                 if task_action == KillSession:
                     target_session.close()
-                req = service_pb2.FinishedTaskRequest(task_id=task_id.id)
+                req = service_pb2.FinishedTaskRequest(task_id=task_id)
                 self.stub.FinishSession(req)
 
-    async def start_session_killer(self):
+    def start_session_killer(self):
         self.wait_for_kill_session_message()
 
-    async def start(self):
+    def start(self):
         self.clear_zombie_session()
-        await self.start_session_killer()
+        self.start_session_killer()
 
 
 def setup_poll_jms_event():
-    poll_jms_event = PollJMSEvent()
-    asyncio.create_task(poll_jms_event.start())
-
-
-if __name__ == '__main__':
-    q = queue.Queue(maxsize=1000)
-    poll_jms_event = PollJMSEvent()
-    asyncio.create_task(poll_jms_event.start())
-    print('create_task -> poll_jms_event')
-    import time
-
-    time.sleep(1)
-    print('FinishedTaskRequest')
-    q.put(service_pb2.FinishedTaskRequest(task_id='2'))
+    jms_event = PollJMSEvent()
+    thread = threading.Thread(target=jms_event.start)
+    thread.start()

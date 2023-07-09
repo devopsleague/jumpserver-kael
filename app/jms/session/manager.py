@@ -20,5 +20,5 @@ class SessionManager:
         return SessionManager.store
 
     @staticmethod
-    def get_jms_session(session_id: str):
+    def get_jms_session(session_id: str) -> JMSSession:
         return SessionManager.store.get(session_id)
