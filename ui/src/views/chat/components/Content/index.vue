@@ -2,32 +2,32 @@
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import Message from '../Message/index.vue'
 import { useChat } from '../../hooks/useChat.js'
-import { pageScroll } from '@/utils/common'
-import { createWebSocket, onSend, onClose, closeWs } from '@/utils/socket'
+import { createWebSocket, onSend, closeWs } from '@/utils/socket'
 import { useChatStore } from '@/store'
+import { pageScroll } from '@/utils/common'
 
-const { hasChat, addChatConversationById, addChatConversationContentById } = useChat()
+const { hasChat, setLoading, addChatConversationById, updateChatConversationContentById } = useChat()
 const chatStore = useChatStore()
 const value = ref('')
-const loading = ref(false)
 
+const loading = computed(() => {
+  return chatStore.loading
+})
 const currentSessionStore = computed(() => {
   return chatStore.filterChat
 })
 
 const onWebSocketMessage = (data) => {
-  console.log('data: -----------------', data)
+  setLoading(true)
   if (data.type === 'message') {
-    loading.value = true
-    
     if (hasChat(data.message.id)) {
       addChatConversationById(data)
     } else {
-      addChatConversationContentById(data.message.id, data.message.content)
-      pageScroll('scrollRef')
+      updateChatConversationContentById(data.message.id, data.message.content)
+
     }
   } else if (data.type === 'finish') {
-    loading.value = false
+    setLoading(false)
   }
 }
 
@@ -40,7 +40,6 @@ const onSendHandle = () => {
     }
   }
   addChatConversationById(chat)
-  pageScroll('scrollRef')
   const message = {
     content: value.value
   }
@@ -55,7 +54,7 @@ const initWebSocket = () => {
 }
 
 const handleStop = () => {
-  loading.value = false
+  setLoading(false)
 }
 
 const onKeyUpEnter = () => {

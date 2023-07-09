@@ -1,5 +1,5 @@
 <script setup>
-import Sider from './components/Sidebar/index.vue'
+import Sidebar from './components/Sidebar/index.vue'
 import Content from './components/Content/index.vue'
 import { useMessage } from 'naive-ui'
 
@@ -10,16 +10,7 @@ window.$message = useMessage()
 <template>
   <div class="root dark:bg-[#24272e]">
     <n-layout has-sider class="root-layout border border-zinc-200 dark:border-neutral-700">
-      <n-layout-sider
-        collapse-mode="width"
-        :collapsed-width="0"
-        :width="240"
-        show-trigger="arrow-circle"
-        content-style="padding: 16px;"
-        bordered
-      >
-        <Sider />
-      </n-layout-sider>
+      <Sidebar />
       <n-layout-content>
         <Content />
       </n-layout-content>
@@ -36,8 +27,6 @@ window.$message = useMessage()
 }
 .root-layout {
   height: 100%;
-  // border: 1px solid;
-  // border-color: #e5e7eb;
   border-radius: 6px;
 } 
 </style>

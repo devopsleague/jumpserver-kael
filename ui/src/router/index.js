@@ -1,5 +1,4 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-// import { setupPageGuard } from './permission'
 import ChatLayout from '@/views/chat/index.vue'
 
 const routes = [
