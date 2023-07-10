@@ -22,9 +22,9 @@ const currentSessionStore = computed(() => {
 const onWebSocketMessage = (data) => {
   setLoading(true)
   if (data.type === 'message') {
+    currentConversationId.value = data.conversation_id
     if (hasChat(data.message.id)) {
       addChatConversationById(data)
-      currentConversationId.value = data.conversation_id
     } else {
       updateChatConversationContentById(data.message.id, data.message.content)
 
@@ -44,7 +44,8 @@ const onSendHandle = () => {
   }
   addChatConversationById(chat)
   const message = {
-    content: value.value
+    content: value.value,
+    conversation_id: currentConversationId.value || null
   }
   onSend(message)
   value.value = ''
@@ -59,7 +60,7 @@ const initWebSocket = () => {
 const onStopHandle = () => {
   $axios.post(
     '/kael/interrupt_current_ask',
-    { id: currentConversationId.value }
+    { id: currentConversationId.value || '' }
   ).then(res => {
     console.log('res:----------------', res)
   })
