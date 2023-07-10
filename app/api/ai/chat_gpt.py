@@ -53,7 +53,7 @@ class ChatGPTManager:
             "stream": True,
             **(extra_args or {})
         }
-
+        print('messages', messages)
         text_content = ''
         reply_message = None
 

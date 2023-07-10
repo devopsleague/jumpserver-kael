@@ -18,7 +18,8 @@ class BaseConfig(Generic[T]):
 
     def __init__(self, _config_type: Type, config_filename: str):
         self._config_type = _config_type
-        self._config_path = os.path.join(g.PROJECT_DIR, config_filename)
+        config_dir = os.environ.get('KAEL_CONFIG_DIR', g.PROJECT_DIR)
+        self._config_path = os.path.join(config_dir, config_filename)
         self.load()
 
     def __getattr__(self, key):
@@ -32,7 +33,9 @@ class BaseConfig(Generic[T]):
 
     def load(self):
         if not os.path.exists(self._config_path):
-            raise Exception(f'config file not found: {self._config_path}')
+            config_dict = self._config_type().dict()
+            self._config = self._config_type(**config_dict)
+            return
         try:
             with open(self._config_path, encoding='utf8') as f:
                 config_dict = yaml.safe_load(f) or {}

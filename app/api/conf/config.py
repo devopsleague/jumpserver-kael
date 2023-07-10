@@ -11,8 +11,8 @@ _TYPE_CHECKING = False
 
 
 class HttpSetting(BaseModel):
-    host: str = '127.0.0.1'
-    port: int = Field(8000, ge=1, le=65535)
+    host: str = '0.0.0.0'
+    port: int = Field(8083, ge=1, le=65535)
     cors_allow_origins: list[str] = ['*']
 
     @staticmethod
