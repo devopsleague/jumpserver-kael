@@ -40,9 +40,13 @@ export function onMessage(res){
   let msgData = res.data
   if (typeof msgData != 'object' && msgData != 'Connect success') {
     let data = msgData.replace(/\ufeff/g, '')
-    let message = JSON.parse(data)
-   // 服务端消息回掉
-    globalCallback(message)
+    try {
+      data = JSON.parse(data)
+      // 服务端返回消息
+      globalCallback(data)
+    } catch (error) {
+      console.log('返回心跳')
+    }
    // 重置心跳
     reset()
   }
@@ -86,7 +90,7 @@ export function start () {
     if (ws.readyState == 1) {
       // 如果连接正常
       console.log('发送心跳')
-      // ws.send('{key: heartbeat}')
+      ws.send('ping')
     } else{
       // 否则重连
       reconnect()

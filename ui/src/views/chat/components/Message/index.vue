@@ -23,7 +23,8 @@ const options = computed(() => {
       key: 'copyText',
       props: {
         onClick: () => {
-          copy(item.message.value.content)
+          console.log('item: ', item)
+          copy(props.item.message.content)
           NMessage.success('复制成功')
         }
       }

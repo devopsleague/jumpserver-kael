@@ -1,7 +1,9 @@
 import axios from 'axios'
 
 const service = axios.create({
-  baseURL: import.meta.env.VITE_GLOB_API_URL,
+  baseURL: import.meta.env.VITE_APP_API_BASE_URL,
+  withCredentials: true,
+  timeout: 10000
 })
 
 service.interceptors.request.use(
