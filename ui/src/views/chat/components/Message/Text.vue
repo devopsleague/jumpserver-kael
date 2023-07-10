@@ -17,7 +17,7 @@ const { error } = toRefs(props)
 const textRef = ref()
 const role = props.message?.role !== 'assistant'
 const loading = computed(() => {
-  return chatStore.loading.value
+  return chatStore.loading
 })
 
 const mdi = new MarkdownIt({
@@ -100,7 +100,7 @@ onUnmounted(() => {
   <div :class="wrapClass">
     <div ref="textRef" class="leading-relaxed break-words">
       <div class="inline-block markdown-body" v-html="text" />
-      <span v-if="loading" class="heart"></span>
+      <span v-if="loading && !role" class="heart"></span>
     </div>
   </div>
 </template>
@@ -121,7 +121,7 @@ onUnmounted(() => {
     opacity: 1;
   }
   25% {
-    transform: scale(1, 1.1);
+    transform: scale(1.1, 1.3);
     opacity: 0.8;
   }
   100% {
@@ -129,5 +129,4 @@ onUnmounted(() => {
     opacity: 1;
   }
 }
-
 </style>

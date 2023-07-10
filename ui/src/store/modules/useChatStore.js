@@ -21,6 +21,7 @@ export const useChatStore = defineStore('chat-store', {
       if (id === this.activeTab) return
 
       this.activeTab = id
+      this.filterCurrentChat()
     },
 
     addSessionsStore(data) {
@@ -39,9 +40,6 @@ export const useChatStore = defineStore('chat-store', {
       }
     },
   
-    currentActiveTab() {
-      return this.sessionsStore[this.activeTab]
-    },
 
     // 过滤当前的聊天
     filterCurrentChat () {
