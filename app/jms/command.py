@@ -1,5 +1,6 @@
 import re
 import time
+import asyncio
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
@@ -51,7 +52,7 @@ class CommandHandler(BaseWisp):
             logger.error(error_message)
             raise WispError(error_message)
 
-    def match_rule(self, command: str):
+    async def match_rule(self, command: str):
         for command_acl in self.command_acls:
             for command_group in command_acl.command_groups:
                 flags = re.UNICODE
@@ -119,7 +120,7 @@ class CommandHandler(BaseWisp):
                 )
                 break
 
-            time.sleep(self.WAIT_TICKET_INTERVAL)
+            await asyncio.sleep(self.WAIT_TICKET_INTERVAL)
 
         if not ticket_closed:
             self.close_ticket(ticket_info)
@@ -128,7 +129,7 @@ class CommandHandler(BaseWisp):
 
     async def command_acl_filter(self, command: CommandRecord):
         is_continue = False
-        acl = self.match_rule(command.input)
+        acl = await self.match_rule(command.input)
         if acl is not None:
             command.risk_level = RiskLevel.Danger
             if acl.action == CommandACL.Reject:
@@ -146,6 +147,8 @@ class CommandHandler(BaseWisp):
                     print(command.input, str(e))
             else:
                 is_continue = True
+        else:
+            is_continue = True
         return is_continue
 
     def close_ticket(self, ticket_info: service_pb2.TicketInfo):

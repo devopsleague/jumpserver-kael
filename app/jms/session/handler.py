@@ -46,14 +46,14 @@ class JMSSession(BaseWisp):
     async def with_audit(self, command: str, chat_func):
         command_record = CommandRecord(input=command)
         try:
-            is_continue = self.command_handler.command_acl_filter(command_record)
+            is_continue = await self.command_handler.command_acl_filter(command_record)
             asyncio.create_task(self.replay_handler.write_input(command_record.input))
             if not is_continue:
                 return
 
             result = await chat_func(self)
             command_record.output = result
-            asyncio.create_task(self.replay_handler.write_input(result.output))
+            asyncio.create_task(self.replay_handler.write_input(command_record.output))
             return result
 
         except Exception as e:
