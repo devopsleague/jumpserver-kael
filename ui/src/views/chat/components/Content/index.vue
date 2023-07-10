@@ -96,7 +96,7 @@ onUnmounted(() => {
             />
             <div v-if="loading" class="sticky bottom-0 left-0 flex justify-center">
               <n-button type="warning" @click="onStopHandle()">
-                <i class="fa fa-stop-circle-o"></i> 停止
+                <i class="fa fa-stop-circle-o mr-4px"></i> 停止
               </n-button>
             </div>
           </div>

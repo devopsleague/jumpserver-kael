@@ -1,11 +1,12 @@
 <script setup>
-import { reactive, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useChatStore } from '@/store'
 
 const chatStore = useChatStore()
 const tabNum = computed(() => chatStore.tabNum)
 const activeTab = computed(() => chatStore.activeTab)
 const sessions = computed(() => chatStore.sessionsStore)
+const loading = computed(() => chatStore.loading)
 
 const onNewChat = () => {
   chatStore.setTabNum()
@@ -17,7 +18,10 @@ const onNewChat = () => {
   chatStore.addSessionsStore(data)
 }
 
+
 const switchTab = (id) => {
+  if (loading.value) return
+
   chatStore.setActiveNum(id)
 }
 
@@ -42,14 +46,20 @@ onMounted(() => {
     bordered
   >
     <div class="box-border">
-      <n-button type="primary" dashed class="mb-16px w-1/1" @click="onNewChat">
-        新建聊天
+      <n-button
+        type="primary"
+        dashed
+        class="mb-16px w-1/1"
+        :disabled="loading"
+        @click="onNewChat"
+      >
+        New chat
       </n-button>
       <div 
         v-for="(item, index) in sessions"
         :key="index"
         class="card border hover:bg-neutral-100 dark:hover:bg-[#24272e] border-[#e5e7eb] dark:border-neutral-800"
-        :class="[activeTab === item.id ? 'active-tab' : '']"
+        :class="{'active-tab': activeTab === item.id, 'not-allowed': loading}"
         @click="switchTab(item.id)"
       >
         <span class="title">
@@ -79,6 +89,10 @@ onMounted(() => {
     white-space: nowrap;
     text-overflow: ellipsis;
   }
+}
+
+.not-allowed {
+  cursor: not-allowed;
 }
 .active-tab {
   border-color: #36ad6a;
