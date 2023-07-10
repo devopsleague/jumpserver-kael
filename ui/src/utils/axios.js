@@ -1,10 +1,12 @@
 import axios from 'axios'
 
 const service = axios.create({
-  baseURL: import.meta.env.VITE_APP_API_BASE_URL,
+  baseURL: process.env.VITE_APP_API_BASE_URL,
   withCredentials: true,
   timeout: 10000
 })
+
+service.defaults.headers.post['Content-Type'] = 'application/json;charset=UTF-8'
 
 service.interceptors.request.use(
   (config) => {
