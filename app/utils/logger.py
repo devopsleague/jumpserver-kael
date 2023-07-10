@@ -22,7 +22,7 @@ LOGGING = {
         },
         'exception': {
             'datefmt': '%Y-%m-%d %H:%M:%S',
-            'format': '\n%(asctime)s [%(levelname)s] %(message)s',
+            'format': '%(asctime)s [%(levelname)s] %(message)s',
         },
         'simple': {
             'format': '%(levelname)s %(message)s'

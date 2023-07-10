@@ -30,7 +30,7 @@ async def interrupt_current_ask(conversation: Conversation):
         jms_session.current_ask_interrupt = True
         return Response(status_code=status.HTTP_200_OK)
     else:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        return Response('Not found conversation id', status_code=status.HTTP_404_NOT_FOUND)
 
 
 # async def create_auth_info(token: Optional[str] = None) -> TokenAuthInfo:

@@ -1,3 +1,14 @@
+FROM golang:1.19-buster as stage-wisp-build
+ARG TARGETARCH
+ARG GOPROXY=https://goproxy.io
+ARG WISP_VERSION=v0.1.8
+ENV GO111MODULE=on
+ENV CGO_ENABLED=0
+
+RUN --mount=type=cache,target=/root/.cache \
+    --mount=type=cache,target=/go/pkg/mod \
+    go install github.com/jumpserver/wisp@${WISP_VERSION}
+
 FROM jumpserver/node:18.13 as ui-build
 ARG TARGETARCH
 ARG NPM_REGISTRY="https://registry.npmmirror.com"
@@ -63,6 +74,7 @@ WORKDIR /opt/kael
 
 COPY app .
 COPY --from=ui-build /opt/kael/ui/dist ./ui
+COPY --from=stage-wisp-build /go/bin/wisp /usr/local/bin/wisp
 
 RUN chmod +x ./entrypoint.sh
 
