@@ -29,23 +29,23 @@ const options = computed(() => {
         }
       }
     },
-    {
-      label: '删除',
-      key: 'delete',
-      props: {
-        onClick: () => {
-          NDialog.warning({
-            title: '删除',
-            content: '是否删除此消息？',
-            positiveText: '是',
-            negativeText: '否',
-            onPositiveClick: () => {
-              NMessage.success('确定')
-            }
-          })
-        }
-      }
-    },
+    // {
+    //   label: '删除',
+    //   key: 'delete',
+    //   props: {
+    //     onClick: () => {
+    //       NDialog.warning({
+    //         title: '删除',
+    //         content: '是否删除此消息？',
+    //         positiveText: '是',
+    //         negativeText: '否',
+    //         onPositiveClick: () => {
+    //           NMessage.success('确定')
+    //         }
+    //       })
+    //     }
+    //   }
+    // }
   ]
 
   return common

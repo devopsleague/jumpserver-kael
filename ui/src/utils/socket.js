@@ -92,8 +92,8 @@ export function start () {
       console.log('发送心跳')
       ws.send('ping')
     } else{
-      // 否则重连
-      reconnect()
+      // 先不重连
+      // reconnect()
     }
     serverTimeoutObj = setTimeout(function() {
       //超时关闭
