@@ -6,63 +6,58 @@ from api.conf import settings
 from api import globals as g
 
 LOG_DIR = os.path.join(g.PROJECT_DIR, 'logs')
-UNEXPECTED_EXCEPTION_LOG_FILE = os.path.join(LOG_DIR, 'unexpected_exception.log')
+UNEXPECTED_EXCEPTION_LOG_FILE = os.path.join(LOG_DIR, 'kael.log')
 LOG_LEVEL = settings.log.log_level
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-        },
-        'main': {
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-            'format': '%(asctime)s [%(module)s %(levelname)s] %(message)s',
-        },
-        'exception': {
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-            'format': '%(asctime)s [%(levelname)s] %(message)s',
-        },
         'simple': {
-            'format': '%(levelname)s %(message)s'
+            'format': '%(asctime)s.%(msecs)03d %(levelname)8s: [%(name)s]\t%(message)s',
+            'datefmt': '%Y/%m/%d %H:%M:%S'
         },
-        'syslog': {
-            'format': 'jumpserver: %(message)s'
+        'proxy-output': {
+            'format': '%(message)s',
+            'datefmt': '%Y/%m/%d %H:%M:%S'
         },
-        'msg': {
-            'format': '%(message)s'
+        'colored': {
+            '()': 'colorlog.ColoredFormatter',
+            'datefmt': '%Y/%m/%d %H:%M:%S',
+            'format': '%(asctime)s.%(msecs)03d %(log_color)s%(levelname)8s%(reset)s: %(cyan)s[%(name)s]%(reset)s %(message)s',
         }
     },
     'handlers': {
-        'null': {
-            'level': 'DEBUG',
-            'class': 'logging.NullHandler',
-        },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'main'
-        },
-        'unexpected_exception': {
+        'file_handler': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
             'encoding': 'utf8',
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'exception',
-            'maxBytes': 1024 * 1024 * 100,
-            'backupCount': 7,
             'filename': UNEXPECTED_EXCEPTION_LOG_FILE,
+            'maxBytes': 1024 * 1024 * 100
+        },
+        'console_handler': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'colored',
+            'level': 'DEBUG'
         },
     },
+    'root': {
+        'level': 'DEBUG',
+        'handlers': []
+    },
     'loggers': {
-        'uvicorn.error:': {
-            'handlers': ['console', 'unexpected_exception'],
-            'level': LOG_LEVEL,
+        'uvicorn.error': {
+            'level': 'INFO',
+            'handlers': ['file_handler']
         },
         'uvicorn.access': {
-            'handlers': ['console'],
-            'level': LOG_LEVEL,
-        }
+            'level': 'INFO',
+            'handlers': ['console_handler']
+        },
+        'kael': {
+            'level': 'INFO',
+            'handlers': ['console_handler', 'file_handler']
+        },
     }
 }
 
@@ -73,4 +68,4 @@ def setup_logger():
 
 
 def get_logger(name):
-    return logging.getLogger(f'{name}')
+    return logging.getLogger(f'kael.{name}')

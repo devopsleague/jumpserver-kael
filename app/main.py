@@ -3,13 +3,15 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
-from utils.logger import setup_logger, LOGGING
+from utils.logger import setup_logger, LOGGING, get_logger
 from wisp import shutdown_protobuf
 
 from api.conf import settings
 from api.middlewares import RequestMiddleware
 from api.routers import chat, health
 from jms.poll import setup_poll_jms_event
+
+logger = get_logger(__name__)
 
 app = FastAPI()
 
@@ -30,11 +32,12 @@ app.add_middleware(RequestMiddleware)
 
 def startup_event():
     setup_logger()
+    logger.info("应用程序启动，执行初始化操作")
     setup_poll_jms_event()
 
 
 def shutdown_event():
-    print("应用程序关闭，执行清理操作")
+    logger.info("应用程序关闭，执行清理操作")
     shutdown_protobuf()
 
 
