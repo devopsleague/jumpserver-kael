@@ -1,5 +1,4 @@
 import json
-import uuid
 import asyncio
 
 from typing import Optional
@@ -25,9 +24,7 @@ router = APIRouter()
 
 @router.post("/interrupt_current_ask")
 async def interrupt_current_ask(conversation: Conversation):
-    print('-------------------')
     jms_session = SessionManager.get_jms_session(conversation.id)
-    print(interrupt_current_ask, jms_session)
     if jms_session:
         assert isinstance(jms_session, JMSSession)
         jms_session.current_ask_interrupt = True
@@ -42,17 +39,15 @@ async def create_auth_info(token: Optional[str] = None) -> TokenAuthInfo:
     return auth_info
 
 
-# async def create_auth_info(token: Optional[str] = None):
-#     return 'create_auth_info'
-
-
 @router.websocket("/chat")
 async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_auth_info)):
-    # async def chat(websocket: WebSocket, auth_info: str = Depends(create_auth_info)):
     session_handler = SessionHandler(websocket)
     await websocket.accept()
-    print('Websocket 连接建立成功')
     current_jms_sessions = []
+    print('Websocket connection established successfully')
+    api_key = auth_info.account.secret
+    manager = ChatGPTManager(api_key=api_key)
+
     try:
         async for message in websocket.iter_text():
             try:
@@ -88,17 +83,11 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
                 asyncio.create_task(
                     jms_session.with_audit(
                         ask_request.content,
-                        chat_func(ask_request)
+                        chat_func(ask_request, manager)
                     )
                 )
             except WispError as e:
                 logger.error(e)
-
-            # if ask_request.conversation_id is None:
-            #     conversation_id = f'{uuid.uuid4()}'
-            # else:
-            #     conversation_id = ask_request.conversation_id
-            # await chat_func(ask_request, conversation_id)(websocket)
 
     except WebSocketDisconnect as e:
         logger.error('Web socket disconnect', e)
@@ -106,44 +95,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
             jms_session.close()
 
 
-# def chat_func(ask_request: AskRequest, conversation_id):
-#     manager = ChatGPTManager()
-#
-#     async def inner(websocket):
-#         last_content = ''
-#         async for message in manager.ask(
-#                 content=ask_request.content,
-#                 conversation_id=conversation_id,
-#                 history_asks=[]
-#         ):
-#
-#             try:
-#                 assert isinstance(message, ChatGPTMessage)
-#                 last_content = message.content
-#             except Exception as e:
-#                 logger.warning(f"convert message error: {e}")
-#                 continue
-#
-#             await reply(
-#                 websocket, AskResponse(
-#                     type=AskResponseType.message,
-#                     conversation_id=conversation_id,
-#                     message=message
-#                 )
-#             )
-#         await reply(
-#             websocket, AskResponse(
-#                 type=AskResponseType.finish,
-#                 conversation_id=conversation_id
-#             )
-#         )
-#         return last_content
-#
-#     return inner
-
-def chat_func(ask_request: AskRequest):
-    manager = ChatGPTManager()
-
+def chat_func(ask_request: AskRequest, manager: ChatGPTManager):
     async def inner(jms_session: JMSSession):
         websocket = jms_session.websocket
         conversation_id = jms_session.session.id
