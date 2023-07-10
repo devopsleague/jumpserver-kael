@@ -1,10 +1,13 @@
 <script setup>
 import { computed, onMounted, onUnmounted, onUpdated, ref, toRefs } from 'vue'
+import { useMessage } from 'naive-ui'
 import MarkdownIt from 'markdown-it'
 import mdKatex from '@traptitech/markdown-it-katex'
 import mila from 'markdown-it-link-attributes'
 import hljs from 'highlight.js'
+import 'highlight.js/styles/atom-one-dark.css'
 import { useChatStore } from '@/store'
+import { copy } from '@/utils/common'
 
 const chatStore = useChatStore()
 const props = defineProps({
@@ -14,9 +17,9 @@ const props = defineProps({
 })
 
 const { error } = toRefs(props)
+const NMessage = useMessage()
 const textRef = ref()
 const role = props.message?.role !== 'assistant'
-console.log('role:-==================================== ', role);
 const loading = computed(() => {
   return chatStore.loading
 })
@@ -28,7 +31,8 @@ const mdi = new MarkdownIt({
     const validLang = !!(language && hljs.getLanguage(language))
     if (validLang) {
       const lang = language ?? ''
-      return highlightBlock(hljs.highlight(code, { language: lang }).value, lang)
+
+      return highlightBlock(hljs.highlight(lang, code, true).value, lang)
     }
     return highlightBlock(hljs.highlightAuto(code).value, '')
   },
@@ -58,7 +62,7 @@ const text = computed(() => {
 })
 
 function highlightBlock(str, lang) {
-  return `<pre class="code-block-wrapper"><div class="code-block-header"><span class="code-block-header__lang">${lang}</span><span class="code-block-header__copy">${'复制1'}</span></div><code class="hljs code-block-body ${lang}">${str}</code></pre>`
+  return `<pre class="code-block-wrapper"><div class="code-block-header"><span class="code-block-header__lang">${lang}</span><span class="code-block-header__copy">${'复制'}</span></div><code class="hljs code-block-body ${lang}">${str}</code></pre>`
 }
 
 function addCopyEvents() {
@@ -68,6 +72,10 @@ function addCopyEvents() {
       btn.addEventListener('click', () => {
         const code = btn.parentElement?.nextElementSibling?.textContent
         if (code) {
+          copy(code)
+          NMessage.success('复制成功', {
+            duration: 700
+          })
         }
       })
     })
