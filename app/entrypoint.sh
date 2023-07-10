@@ -11,7 +11,5 @@ echo "KAEL Version $VERSION, more see https://www.jumpserver.org"
 echo "Quit the server with CONTROL-C."
 echo
 
-wisp
-
 cd /opt/kael
-uvicorn main:app --host 0.0.0.0 --port 8083
+wisp

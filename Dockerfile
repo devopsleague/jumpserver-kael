@@ -83,5 +83,10 @@ ENV VERSION=$VERSION
 
 ENV LANG=zh_CN.UTF-8
 
+ENV WORK_DIR=/opt/kael
+ENV COMPONENT_NAME=kael
+ENV EXECUTE_PROGRAM="uvicorn main:app --host 0.0.0.0 --port 8083"
+
 EXPOSE 8083
+
 CMD ["./entrypoint.sh"]

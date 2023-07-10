@@ -29,9 +29,9 @@ def make_session(proxy: Optional[str] = None) -> httpx.AsyncClient:
 
 class ChatGPTManager:
 
-    def __init__(self, proxy: Optional[str] = None):
+    def __init__(self, proxy: Optional[str] = None, api_key: Optional[str] = None):
+        self.api_key = api_key
         self.session = make_session(proxy)
-        self.api_key = None
 
     async def ask(
             self, content: str, history_asks: list = None,
@@ -53,7 +53,7 @@ class ChatGPTManager:
             "stream": True,
             **(extra_args or {})
         }
-        print('messages', messages)
+
         text_content = ''
         reply_message = None
 
