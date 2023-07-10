@@ -19,7 +19,6 @@ const onNewChat = () => {
 
 const switchTab = (id) => {
   chatStore.setActiveNum(id)
-  chatStore.filterCurrentChat()
 }
 
 const onDelete = (id) => {
