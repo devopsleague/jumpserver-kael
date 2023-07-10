@@ -16,6 +16,7 @@ const props = defineProps({
 const { error } = toRefs(props)
 const textRef = ref()
 const role = props.message?.role !== 'assistant'
+console.log('role:-==================================== ', role);
 const loading = computed(() => {
   return chatStore.loading
 })
@@ -50,7 +51,6 @@ const wrapClass = computed(() => {
 
 const text = computed(() => {
   const value = props.message?.content ?? ''
-  console.log('value: ', value);
   if (props.message?.content) {
     return mdi.render(value)
   }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { ref, onMounted, computed, inject, onUnmounted, reactive } from 'vue'
 import Message from '../Message/index.vue'
 import { useChat } from '../../hooks/useChat.js'
 import { createWebSocket, onSend, closeWs } from '@/utils/socket'
@@ -9,6 +9,8 @@ import { pageScroll } from '@/utils/common'
 const { hasChat, setLoading, addChatConversationById, updateChatConversationContentById } = useChat()
 const chatStore = useChatStore()
 const value = ref('')
+const $axios = inject("$axios")
+const currentConversationId = ref('')
 
 const loading = computed(() => {
   return chatStore.loading
@@ -22,6 +24,7 @@ const onWebSocketMessage = (data) => {
   if (data.type === 'message') {
     if (hasChat(data.message.id)) {
       addChatConversationById(data)
+      currentConversationId.value = data.conversation_id
     } else {
       updateChatConversationContentById(data.message.id, data.message.content)
 
@@ -53,7 +56,13 @@ const initWebSocket = () => {
   createWebSocket(path, onWebSocketMessage)
 }
 
-const handleStop = () => {
+const onStopHandle = () => {
+  $axios.post(
+    '/kael/interrupt_current_ask',
+    { id: currentConversationId.value }
+  ).then(res => {
+    console.log('res:----------------', res)
+  })
   setLoading(false)
 }
 
@@ -85,7 +94,7 @@ onUnmounted(() => {
               @delete="handleDelete(index)"
             />
             <div v-if="loading" class="sticky bottom-0 left-0 flex justify-center">
-              <n-button type="warning" @click="handleStop">
+              <n-button type="warning" @click="onStopHandle()">
                 <i class="fa fa-stop-circle-o"></i> 停止
               </n-button>
             </div>

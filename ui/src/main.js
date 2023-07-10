@@ -7,9 +7,12 @@ import 'font-awesome/css/font-awesome.css'
 import lodash from 'lodash'
 import { setupStore } from './store'
 import '@/styles/index.scss'
+import axios from '@/utils/axios'
 
 window._ = lodash
 const app = createApp(App)
+app.provide('$axios', axios)
+
 setupStore(app)
 setupRouter(app)
 
