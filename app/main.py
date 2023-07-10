@@ -23,13 +23,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/ui", StaticFiles(directory="ui"), name="ui")
+app.mount("/ui", StaticFiles(directory="ui", html=True), name="ui")
+app.mount("/assets", StaticFiles(directory="ui/assets"), name="assets")
 app.add_middleware(RequestMiddleware)
 
 
 def startup_event():
     setup_logger()
-    # setup_poll_jms_event()
+    setup_poll_jms_event()
 
 
 def shutdown_event():
