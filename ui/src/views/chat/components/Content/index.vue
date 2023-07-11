@@ -93,8 +93,8 @@ onUnmounted(() => {
 
 <template>
   <div class="content">
-    <main class="flex-1 overflow-y-auto">
-      <div id="scrollRef" class="overflow-hidden p-4">
+    <main class="flex-1 overflow-y-auto dark:bg-[#343540]">
+      <div id="scrollRef" class="overflow-hidden pt-4 pb-4">
         <div>
           <div class="overflow-y-auto">
             <Message
@@ -113,23 +113,28 @@ onUnmounted(() => {
         </div>
       </div>
     </main>
-    <footer class="footer p-4">
-      <div class="flex">
+    <footer class="footer p-4 dark:bg-[#343540]">
+      <div class="flex w-800px mx-auto">
         <n-input
           v-model:value="value"
           type="text"
           placeholder="来说点什么吧..."
+          class="dark:bg-[#40414f]"
           :disabled="loading"
           @keyup.enter="onKeyUpEnter"
-        />
-        <n-button
-          type="primary"
-          class="ml-10px"
-          :disabled="loading"
-          @click="onSendHandle"
         >
-          <i class="fa fa-send"></i>
-        </n-button>
+          <template #suffix>
+            <n-button
+              quaternary
+              type="primary"
+              class="ml-10px"
+              :disabled="loading"
+              @click="onSendHandle"
+            >
+              <i class="fa fa-send"></i>
+            </n-button>
+          </template>
+        </n-input>
       </div>
     </footer>
   </div>
@@ -141,5 +146,10 @@ onUnmounted(() => {
   flex-direction: column;
   width: 100%;
   height: 100%;
+}
+.n-input {
+  height: 58px;
+  line-height: 58px;
+  border-radius: 12px;
 }
 </style>

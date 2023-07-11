@@ -8,8 +8,11 @@ window.$message = useMessage()
 </script>
 
 <template>
-  <div class="root dark:bg-[#24272e]">
-    <n-layout has-sider class="root-layout border border-zinc-200 dark:border-neutral-700">
+  <div class="root">
+    <n-layout
+      has-sider
+      class="root-layout dark:bg-gray-800"
+    >
       <Sidebar />
       <n-layout-content>
         <Content />
@@ -18,15 +21,19 @@ window.$message = useMessage()
   </div>
 </template>
 
+<style>
+::v-deep .n-layout {
+  background-color: transparent;
+}
+</style>
+
 <style lang="scss" scoped>
 .root {
   width: 100%;
   height: 100vh;
-  padding: 20px;
   box-sizing: border-box;
 }
 .root-layout {
   height: 100%;
-  border-radius: 6px;
-} 
+}
 </style>

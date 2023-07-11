@@ -53,22 +53,25 @@ const options = computed(() => {
 
 </script>
 <template>
-  <div ref="messageRef" class="mb-20px">
-    <div class="flex" :class="[asRawText ? 'flex-row': 'flex-row-reverse']">
+  <div
+    ref="messageRef" :class="{'dark:bg-[#444654]': asRawText}">
+    <div class="flex w-800px mx-auto pt-20px pb-20px">
       <div class="avatar mr-6px ml-6px">
         <n-avatar :src="asRawText ? robot : defaultAvatar" />
       </div>
-      <div class="overflow-hidden flex-1 text-sm flex flex-col" :class="[asRawText ? 'items-start': 'items-end']">
-        <p style="color: #b6bdc6">
-          {{ dayjs(item.message?.create_time).format('YYYY-MM-DD HH:mm:ss') }}
-        </p>
-        <div class="message flex">
-          <Text :message="item.message" :as-raw-text="asRawText" :error="item?.error" />
+      <div class="overflow-hidden flex-1 text-sm flex flex-col">
+        <p style="color: #b6bdc6" class="flex justify-between">
+          <span>
+            {{ dayjs(item.message?.create_time).format('YYYY-MM-DD HH:mm:ss') }}
+          </span>
           <n-dropdown trigger="hover" :options="options">
             <div style="display: inline-block; color: #b6bdc6; align-self: end;" class="hover:cursor-pointer">
               <i class="fa fa-ellipsis-v"></i>
             </div>
           </n-dropdown>
+        </p>
+        <div class="message flex">
+          <Text :message="item.message" :as-raw-text="asRawText" :error="item?.error" />
         </div>
       </div>
     </div>
@@ -88,8 +91,8 @@ const options = computed(() => {
 .message {
   & > div {
     display: inline-block;
-    padding: 6px 10px;
-    border-radius: 6px;
+    padding: 6px 0;
+    background-color: transparent;
   }
 }
 </style>
