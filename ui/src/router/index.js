@@ -34,14 +34,10 @@ const routes = [
 ]
 
 export const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHashHistory('/kael/'),
   routes,
-  mode: 'history',
-  base: '/kael/',
   scrollBehavior: () => ({ left: 0, top: 0 }),
 })
-
-// setupPageGuard(router)
 
 export async function setupRouter(app) {
   app.use(router)
