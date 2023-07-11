@@ -19,6 +19,7 @@ export function createWebSocket(uri = globalUri, callback = globalCallback) {
   globalCallback = callback
 
   const params = getUrlParams()
+  console.log('params', params)
   if (!Object.hasOwn(params, 'token')) {
     window.$message.error('请传入 token 参数')
     return

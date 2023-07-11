@@ -5,6 +5,7 @@ import path from 'path'
 const resolve = (dir) => path.join(__dirname, dir)
 
 export default defineConfig({
+  base: '/kael',
   plugins: [vue(), WindiCSS()],
   resolve: {
     alias: {
@@ -21,7 +22,7 @@ export default defineConfig({
     cors: true,
     open: true,
     proxy: {
-      '/kael': {
+      '/kael/interrupt_current_ask': {
         target: process.env.VITE_APP_API_BASE_URL,
         changeOrigin: true
       }
