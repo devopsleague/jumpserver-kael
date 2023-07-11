@@ -27,7 +27,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/kael/connect", StaticFiles(directory="ui", html=True), name="ui")
+
+@app.get("/kael/connect")
+async def connect(token: str):
+    redirect_url = f"/kael/?token={token}"
+    return RedirectResponse(redirect_url)
+
+
 app.mount("/kael", StaticFiles(directory="ui", html=True), name="ui")
 app.add_middleware(RequestMiddleware)
 
