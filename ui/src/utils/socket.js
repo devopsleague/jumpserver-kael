@@ -1,4 +1,5 @@
 import { useChatStore } from '@/store'
+import { getUrlParams } from './common.js'
 
 let ws= null; // 建立的连接
 let lockReconnect= false; // 是否真正建立连接
@@ -16,6 +17,13 @@ export function createWebSocket(uri = globalUri, callback = globalCallback) {
   chatStore = useChatStore()
   globalUri = uri
   globalCallback = callback
+
+  const params = getUrlParams()
+  if (!Object.hasOwn(params, 'token')) {
+    window.$message.error('请传入 token 参数')
+    return
+  }
+  uri = uri + `?token=${params.token}`
   ws = new WebSocket(uri)
   ws.onopen = ()=>{
     start()
@@ -32,7 +40,7 @@ export function onSend(message){
   if (typeof message !== 'string') {
     message = JSON.stringify(message)
   }
-  ws.send(message)
+  ws?.send(message)
 }
  
 // 接受服务端消息

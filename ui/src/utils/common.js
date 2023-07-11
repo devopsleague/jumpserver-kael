@@ -23,3 +23,18 @@ export const pageScroll = (
     dom.scrollIntoView(scrollOption)
   }, 0)
 }
+
+export function getUrlParams(url = window.location.href) {
+  if (url.indexOf('?') === -1) {
+    return {}
+  }
+  const urlStr = url.split('?')[1]
+  const obj = {}
+  const paramsArr = urlStr.split('&')
+  for (let i = 0, len = paramsArr.length; i < len; i++) {
+    const arr = paramsArr[i].split('=')
+    obj[arr[0]] = arr[1]
+  }
+  return obj
+}
+
