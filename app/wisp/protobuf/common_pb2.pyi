@@ -13,10 +13,18 @@ class TaskAction(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
 class RiskLevel(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = []
     Normal: _ClassVar[RiskLevel]
-    Danger: _ClassVar[RiskLevel]
+    Warning: _ClassVar[RiskLevel]
+    Reject: _ClassVar[RiskLevel]
+    ReviewRejection: _ClassVar[RiskLevel]
+    ReviewAccept: _ClassVar[RiskLevel]
+    ReviewCancel: _ClassVar[RiskLevel]
 KillSession: TaskAction
 Normal: RiskLevel
-Danger: RiskLevel
+Warning: RiskLevel
+Reject: RiskLevel
+ReviewRejection: RiskLevel
+ReviewAccept: RiskLevel
+ReviewCancel: RiskLevel
 
 class User(_message.Message):
     __slots__ = ["id", "name", "username", "role", "is_valid", "is_active"]
@@ -59,7 +67,7 @@ class LabelValue(_message.Message):
 class Asset(_message.Message):
     __slots__ = ["id", "name", "address", "org_id", "org_name", "protocols", "specific"]
     class Specific(_message.Message):
-        __slots__ = ["db_name", "use_ssl", "ca_cert", "client_cert", "client_key", "allow_invalid_cert", "auto_fill", "username_selector", "password_selector", "submit_selector", "script"]
+        __slots__ = ["db_name", "use_ssl", "ca_cert", "client_cert", "client_key", "allow_invalid_cert", "auto_fill", "username_selector", "password_selector", "submit_selector", "script", "http_proxy"]
         DB_NAME_FIELD_NUMBER: _ClassVar[int]
         USE_SSL_FIELD_NUMBER: _ClassVar[int]
         CA_CERT_FIELD_NUMBER: _ClassVar[int]
@@ -71,6 +79,7 @@ class Asset(_message.Message):
         PASSWORD_SELECTOR_FIELD_NUMBER: _ClassVar[int]
         SUBMIT_SELECTOR_FIELD_NUMBER: _ClassVar[int]
         SCRIPT_FIELD_NUMBER: _ClassVar[int]
+        HTTP_PROXY_FIELD_NUMBER: _ClassVar[int]
         db_name: str
         use_ssl: bool
         ca_cert: str
@@ -82,7 +91,8 @@ class Asset(_message.Message):
         password_selector: str
         submit_selector: str
         script: str
-        def __init__(self, db_name: _Optional[str] = ..., use_ssl: bool = ..., ca_cert: _Optional[str] = ..., client_cert: _Optional[str] = ..., client_key: _Optional[str] = ..., allow_invalid_cert: bool = ..., auto_fill: _Optional[str] = ..., username_selector: _Optional[str] = ..., password_selector: _Optional[str] = ..., submit_selector: _Optional[str] = ..., script: _Optional[str] = ...) -> None: ...
+        http_proxy: str
+        def __init__(self, db_name: _Optional[str] = ..., use_ssl: bool = ..., ca_cert: _Optional[str] = ..., client_cert: _Optional[str] = ..., client_key: _Optional[str] = ..., allow_invalid_cert: bool = ..., auto_fill: _Optional[str] = ..., username_selector: _Optional[str] = ..., password_selector: _Optional[str] = ..., submit_selector: _Optional[str] = ..., script: _Optional[str] = ..., http_proxy: _Optional[str] = ...) -> None: ...
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     ADDRESS_FIELD_NUMBER: _ClassVar[int]
@@ -242,7 +252,7 @@ class TerminalTask(_message.Message):
     def __init__(self, id: _Optional[str] = ..., action: _Optional[_Union[TaskAction, str]] = ..., session_id: _Optional[str] = ..., terminated_by: _Optional[str] = ...) -> None: ...
 
 class TokenAuthInfo(_message.Message):
-    __slots__ = ["key_id", "secrete_id", "asset", "user", "account", "permission", "expire_info", "filter_rules", "gateways", "setting"]
+    __slots__ = ["key_id", "secrete_id", "asset", "user", "account", "permission", "expire_info", "filter_rules", "gateways", "setting", "platform"]
     KEY_ID_FIELD_NUMBER: _ClassVar[int]
     SECRETE_ID_FIELD_NUMBER: _ClassVar[int]
     ASSET_FIELD_NUMBER: _ClassVar[int]
@@ -253,6 +263,7 @@ class TokenAuthInfo(_message.Message):
     FILTER_RULES_FIELD_NUMBER: _ClassVar[int]
     GATEWAYS_FIELD_NUMBER: _ClassVar[int]
     SETTING_FIELD_NUMBER: _ClassVar[int]
+    PLATFORM_FIELD_NUMBER: _ClassVar[int]
     key_id: str
     secrete_id: str
     asset: Asset
@@ -263,7 +274,43 @@ class TokenAuthInfo(_message.Message):
     filter_rules: _containers.RepeatedCompositeFieldContainer[CommandACL]
     gateways: _containers.RepeatedCompositeFieldContainer[Gateway]
     setting: ComponentSetting
-    def __init__(self, key_id: _Optional[str] = ..., secrete_id: _Optional[str] = ..., asset: _Optional[_Union[Asset, _Mapping]] = ..., user: _Optional[_Union[User, _Mapping]] = ..., account: _Optional[_Union[Account, _Mapping]] = ..., permission: _Optional[_Union[Permission, _Mapping]] = ..., expire_info: _Optional[_Union[ExpireInfo, _Mapping]] = ..., filter_rules: _Optional[_Iterable[_Union[CommandACL, _Mapping]]] = ..., gateways: _Optional[_Iterable[_Union[Gateway, _Mapping]]] = ..., setting: _Optional[_Union[ComponentSetting, _Mapping]] = ...) -> None: ...
+    platform: Platform
+    def __init__(self, key_id: _Optional[str] = ..., secrete_id: _Optional[str] = ..., asset: _Optional[_Union[Asset, _Mapping]] = ..., user: _Optional[_Union[User, _Mapping]] = ..., account: _Optional[_Union[Account, _Mapping]] = ..., permission: _Optional[_Union[Permission, _Mapping]] = ..., expire_info: _Optional[_Union[ExpireInfo, _Mapping]] = ..., filter_rules: _Optional[_Iterable[_Union[CommandACL, _Mapping]]] = ..., gateways: _Optional[_Iterable[_Union[Gateway, _Mapping]]] = ..., setting: _Optional[_Union[ComponentSetting, _Mapping]] = ..., platform: _Optional[_Union[Platform, _Mapping]] = ...) -> None: ...
+
+class Platform(_message.Message):
+    __slots__ = ["id", "name", "category", "charset", "type", "protocols"]
+    ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    CATEGORY_FIELD_NUMBER: _ClassVar[int]
+    CHARSET_FIELD_NUMBER: _ClassVar[int]
+    TYPE_FIELD_NUMBER: _ClassVar[int]
+    PROTOCOLS_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    name: str
+    category: str
+    charset: str
+    type: str
+    protocols: _containers.RepeatedCompositeFieldContainer[PlatformProtocol]
+    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., category: _Optional[str] = ..., charset: _Optional[str] = ..., type: _Optional[str] = ..., protocols: _Optional[_Iterable[_Union[PlatformProtocol, _Mapping]]] = ...) -> None: ...
+
+class PlatformProtocol(_message.Message):
+    __slots__ = ["id", "name", "port", "settings"]
+    class SettingsEntry(_message.Message):
+        __slots__ = ["key", "value"]
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+    ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    PORT_FIELD_NUMBER: _ClassVar[int]
+    SETTINGS_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    name: str
+    port: int
+    settings: _containers.ScalarMap[str, str]
+    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., port: _Optional[int] = ..., settings: _Optional[_Mapping[str, str]] = ...) -> None: ...
 
 class ComponentSetting(_message.Message):
     __slots__ = ["max_idle_time"]
@@ -288,3 +335,11 @@ class PublicSetting(_message.Message):
     xpack_enabled: bool
     valid_license: bool
     def __init__(self, xpack_enabled: bool = ..., valid_license: bool = ...) -> None: ...
+
+class Cookie(_message.Message):
+    __slots__ = ["name", "value"]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    VALUE_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    value: str
+    def __init__(self, name: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...

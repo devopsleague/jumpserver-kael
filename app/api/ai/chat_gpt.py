@@ -7,7 +7,6 @@ import httpx
 from pydantic import ValidationError
 
 from api.conf import settings
-from api.enums import ChatGPTModels
 from api.message import ChatGPTMessage
 from api.schemas import ChatGPTResponse
 from utils.logger import get_logger
@@ -16,10 +15,10 @@ logger = get_logger(__name__)
 
 
 def make_session(proxy: Optional[str] = None) -> httpx.AsyncClient:
-    if settings.chat_gpt.proxy is not None:
+    if proxy:
         proxies = {
-            'http://': proxy or settings.chat_gpt.proxy,
-            'https://': proxy or settings.chat_gpt.proxy,
+            'http://': proxy,
+            'https://': proxy,
         }
         session = httpx.AsyncClient(proxies=proxies, timeout=None)
     else:
@@ -29,15 +28,20 @@ def make_session(proxy: Optional[str] = None) -> httpx.AsyncClient:
 
 class ChatGPTManager:
 
-    def __init__(self, proxy: Optional[str] = None, api_key: Optional[str] = None):
+    def __init__(
+            self,
+            api_key: Optional[str] = None,
+            model: Optional[str] = None,
+            proxy: Optional[str] = None,
+    ):
         self.api_key = api_key
+        self.model = model if model else 'gpt-3.5-turbo'
         self.session = make_session(proxy)
 
     async def ask(
             self, content: str, history_asks: list = None,
             extra_args: Optional[dict] = None, **_kwargs
     ):
-        model = ChatGPTModels('gpt_3_5')
         message_id = uuid.uuid4()
 
         history_asks.append(content)
@@ -45,7 +49,7 @@ class ChatGPTManager:
 
         base_url = settings.chat_gpt.openai_base_url
         data = {
-            "model": model.code(),
+            "model": self.model,
             "messages": [
                 {"role": 'user', "content": msg}
                 for msg in messages
@@ -60,12 +64,11 @@ class ChatGPTManager:
         read_timeout = settings.chat_gpt.read_timeout
         connect_timeout = settings.chat_gpt.connect_timeout
         timeout = httpx.Timeout(read_timeout, connect=connect_timeout)
-        api_key = self.api_key or settings.chat_gpt.api_key
         async with self.session.stream(
                 method="POST",
                 url=f"{base_url}chat/completions",
                 json=data,
-                headers={"Authorization": f"Bearer {api_key}"},
+                headers={"Authorization": f"Bearer {self.api_key}"},
                 timeout=timeout
         ) as response:
             async for line in response.aiter_lines():

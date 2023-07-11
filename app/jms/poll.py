@@ -43,7 +43,8 @@ class PollJMSEvent(BaseWisp):
             if target_session is not None:
                 if task_action == KillSession:
                     target_session.close()
-                req = service_pb2.FinishedTaskRequest(task_id=task_id)
+
+                req = service_pb2.FinishedTaskRequest(task_id=target_session.session.id)
                 self.stub.FinishSession(req)
 
     def start_session_killer(self):

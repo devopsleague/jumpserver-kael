@@ -98,7 +98,7 @@ class ReplayResponse(_message.Message):
     def __init__(self, status: _Optional[_Union[Status, _Mapping]] = ...) -> None: ...
 
 class CommandRequest(_message.Message):
-    __slots__ = ["sid", "org_id", "input", "output", "user", "asset", "account", "timestamp", "risk_level"]
+    __slots__ = ["sid", "org_id", "input", "output", "user", "asset", "account", "timestamp", "risk_level", "cmd_acl_id", "cmd_group_id"]
     SID_FIELD_NUMBER: _ClassVar[int]
     ORG_ID_FIELD_NUMBER: _ClassVar[int]
     INPUT_FIELD_NUMBER: _ClassVar[int]
@@ -108,6 +108,8 @@ class CommandRequest(_message.Message):
     ACCOUNT_FIELD_NUMBER: _ClassVar[int]
     TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
     RISK_LEVEL_FIELD_NUMBER: _ClassVar[int]
+    CMD_ACL_ID_FIELD_NUMBER: _ClassVar[int]
+    CMD_GROUP_ID_FIELD_NUMBER: _ClassVar[int]
     sid: str
     org_id: str
     input: str
@@ -117,7 +119,9 @@ class CommandRequest(_message.Message):
     account: str
     timestamp: int
     risk_level: _common_pb2.RiskLevel
-    def __init__(self, sid: _Optional[str] = ..., org_id: _Optional[str] = ..., input: _Optional[str] = ..., output: _Optional[str] = ..., user: _Optional[str] = ..., asset: _Optional[str] = ..., account: _Optional[str] = ..., timestamp: _Optional[int] = ..., risk_level: _Optional[_Union[_common_pb2.RiskLevel, str]] = ...) -> None: ...
+    cmd_acl_id: str
+    cmd_group_id: str
+    def __init__(self, sid: _Optional[str] = ..., org_id: _Optional[str] = ..., input: _Optional[str] = ..., output: _Optional[str] = ..., user: _Optional[str] = ..., asset: _Optional[str] = ..., account: _Optional[str] = ..., timestamp: _Optional[int] = ..., risk_level: _Optional[_Union[_common_pb2.RiskLevel, str]] = ..., cmd_acl_id: _Optional[str] = ..., cmd_group_id: _Optional[str] = ...) -> None: ...
 
 class CommandResponse(_message.Message):
     __slots__ = ["status"]
@@ -314,3 +318,17 @@ class PortFailureRequest(_message.Message):
     DATA_FIELD_NUMBER: _ClassVar[int]
     data: _containers.RepeatedCompositeFieldContainer[PortFailure]
     def __init__(self, data: _Optional[_Iterable[_Union[PortFailure, _Mapping]]] = ...) -> None: ...
+
+class CookiesRequest(_message.Message):
+    __slots__ = ["cookies"]
+    COOKIES_FIELD_NUMBER: _ClassVar[int]
+    cookies: _containers.RepeatedCompositeFieldContainer[_common_pb2.Cookie]
+    def __init__(self, cookies: _Optional[_Iterable[_Union[_common_pb2.Cookie, _Mapping]]] = ...) -> None: ...
+
+class UserResponse(_message.Message):
+    __slots__ = ["status", "data"]
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    DATA_FIELD_NUMBER: _ClassVar[int]
+    status: Status
+    data: _common_pb2.User
+    def __init__(self, status: _Optional[_Union[Status, _Mapping]] = ..., data: _Optional[_Union[_common_pb2.User, _Mapping]] = ...) -> None: ...

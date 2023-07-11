@@ -104,6 +104,11 @@ class ServiceStub(object):
                 request_serializer=service__pb2.PortFailureRequest.SerializeToString,
                 response_deserializer=service__pb2.StatusResponse.FromString,
                 )
+        self.CheckUserByCookies = channel.unary_unary(
+                '/message.Service/CheckUserByCookies',
+                request_serializer=service__pb2.CookiesRequest.SerializeToString,
+                response_deserializer=service__pb2.UserResponse.FromString,
+                )
 
 
 class ServiceServicer(object):
@@ -217,6 +222,12 @@ class ServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def CheckUserByCookies(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -309,6 +320,11 @@ def add_ServiceServicer_to_server(servicer, server):
                     servicer.HandlePortFailure,
                     request_deserializer=service__pb2.PortFailureRequest.FromString,
                     response_serializer=service__pb2.StatusResponse.SerializeToString,
+            ),
+            'CheckUserByCookies': grpc.unary_unary_rpc_method_handler(
+                    servicer.CheckUserByCookies,
+                    request_deserializer=service__pb2.CookiesRequest.FromString,
+                    response_serializer=service__pb2.UserResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -623,5 +639,22 @@ class Service(object):
         return grpc.experimental.unary_unary(request, target, '/message.Service/HandlePortFailure',
             service__pb2.PortFailureRequest.SerializeToString,
             service__pb2.StatusResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def CheckUserByCookies(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/message.Service/CheckUserByCookies',
+            service__pb2.CookiesRequest.SerializeToString,
+            service__pb2.UserResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
