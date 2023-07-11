@@ -35,7 +35,6 @@ async def interrupt_current_ask(conversation: Conversation):
 
 async def create_auth_info(token: Optional[str] = None) -> TokenAuthInfo:
     token_handler = TokenHandler()
-    print(token)
     auth_info = token_handler.get_token_auth_info(token)
     return auth_info
 
@@ -49,7 +48,6 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
     proxy = auth_info.asset.specific.http_proxy
     model = auth_info.platform.protocols[0].settings.get('api_mode')
     manager = ChatGPTManager(api_key=api_key, model=model, proxy=proxy)
-
     try:
         async for message in websocket.iter_text():
             try:
