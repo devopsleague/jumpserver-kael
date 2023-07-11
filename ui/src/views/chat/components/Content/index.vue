@@ -21,6 +21,15 @@ const currentSessionStore = computed(() => {
 
 const onWebSocketMessage = (data) => {
   setLoading(true)
+  currentConversationId.value = data?.conversation_id
+  const types = ['waiting', 'reject', 'error']
+  if (types.includes(data.type)) {
+    if (hasChat(data.message.id)) {
+      addChatConversationById(data)
+    } else {
+      updateChatConversationContentById(data.message.id, data.system_message.content)
+    }
+  }
   if (data.type === 'message') {
     currentConversationId.value = data.conversation_id
     if (hasChat(data.message.id)) {
@@ -29,7 +38,8 @@ const onWebSocketMessage = (data) => {
       updateChatConversationContentById(data.message.id, data.message.content)
 
     }
-  } else if (data.type === 'finish') {
+  }
+  if (data.type === 'finish') {
     setLoading(false)
   }
 }
