@@ -63,7 +63,7 @@ const onSendHandle = () => {
 
 const initWebSocket = () => {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const path = `${protocol}://127.0.0.1:8083/kael/chat`
+  const path = `${protocol}://${window.location.host}/kael/chat`
   createWebSocket(path, onWebSocketMessage)
 }
 
