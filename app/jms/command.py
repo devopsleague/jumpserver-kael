@@ -142,7 +142,7 @@ class CommandHandler(BaseWisp):
                 )
             elif acl.action == CommandACL.Review:
                 try:
-                    is_continue = self.create_and_wait_ticket(command.input, acl)
+                    is_continue = await self.create_and_wait_ticket(command.input, acl)
                 except Exception as e:
                     print(command.input, str(e))
             else:

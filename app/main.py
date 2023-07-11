@@ -2,6 +2,7 @@ import uvicorn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from starlette.staticfiles import StaticFiles
 from utils.logger import setup_logger, LOGGING, get_logger
 from wisp import shutdown_protobuf
@@ -28,6 +29,14 @@ app.add_middleware(
 app.mount("/ui", StaticFiles(directory="ui", html=True), name="ui")
 app.mount("/assets", StaticFiles(directory="ui/assets"), name="assets")
 app.add_middleware(RequestMiddleware)
+
+
+@app.get("/connect")
+async def connect(token: str = None):
+    redirect_url = "/ui"
+    if token:
+        redirect_url += f"?token={token}"
+    return RedirectResponse(redirect_url)
 
 
 def startup_event():
