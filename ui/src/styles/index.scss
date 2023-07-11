@@ -37,3 +37,7 @@ pre.code-block-wrapper {
 .hljs.code-block-body {
   padding-top: 22px;
 }
+
+::v-deep .n-layout-content {
+  background-color: transparent;
+}

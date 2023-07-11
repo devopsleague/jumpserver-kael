@@ -44,6 +44,7 @@ onMounted(() => {
     show-trigger="arrow-circle"
     content-style="padding: 16px;"
     bordered
+    class="bg-[#202123]"
   >
     <div class="box-border">
       <n-button
@@ -58,7 +59,7 @@ onMounted(() => {
       <div 
         v-for="(item, index) in sessions"
         :key="index"
-        class="card border hover:bg-neutral-100 dark:hover:bg-[#24272e] border-[#e5e7eb] dark:border-neutral-800"
+        class="card border hover:bg-neutral-100 dark:hover:bg-[#2A2B32] border-[#e5e7eb] dark:border-neutral-800"
         :class="{'active-tab': activeTab === item.id, 'not-allowed': loading}"
         @click="switchTab(item.id)"
       >
@@ -96,6 +97,6 @@ onMounted(() => {
 }
 .active-tab {
   border-color: #36ad6a;
-  background-color: rgba(36, 39, 46, 1);
+  background-color: #343540;
 }
 </style>
