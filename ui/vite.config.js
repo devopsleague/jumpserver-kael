@@ -5,7 +5,7 @@ import path from 'path'
 const resolve = (dir) => path.join(__dirname, dir)
 
 export default defineConfig({
-  base: '/kael',
+  base: '/kael/',
   plugins: [vue(), WindiCSS()],
   resolve: {
     alias: {
