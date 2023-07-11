@@ -36,6 +36,8 @@ const routes = [
 export const router = createRouter({
   history: createWebHashHistory(),
   routes,
+  mode: 'history',
+  base: '/kael/',
   scrollBehavior: () => ({ left: 0, top: 0 }),
 })
 

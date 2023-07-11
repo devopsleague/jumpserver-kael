@@ -24,7 +24,7 @@ export const pageScroll = (
   }, 0)
 }
 
-export function getUrlParams(url = window.location.href) {
+export function getUrlParams(url = window.location.search) {
   if (url.indexOf('?') === -1) {
     return {}
   }
