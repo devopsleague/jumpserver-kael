@@ -26,17 +26,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/ui", StaticFiles(directory="ui", html=True), name="ui")
-app.mount("/assets", StaticFiles(directory="ui/assets"), name="assets")
+
+app.mount("/kael/connect", StaticFiles(directory="ui", html=True), name="ui")
+app.mount("/kael", StaticFiles(directory="ui", html=True), name="ui")
 app.add_middleware(RequestMiddleware)
-
-
-@app.get("/connect")
-async def connect(token: str = None):
-    redirect_url = "/ui"
-    if token:
-        redirect_url += f"?token={token}"
-    return RedirectResponse(redirect_url)
 
 
 def startup_event():
