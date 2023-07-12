@@ -37,6 +37,7 @@ class ChatGPTManager:
         self.api_key = api_key
         self.model = model if model else 'gpt-3.5-turbo'
         self.session = make_session(proxy)
+        logger.info(f"api_key: {api_key}, model: {model}, proxy: {proxy}")
 
     async def ask(
             self, content: str, history_asks: list = None,
