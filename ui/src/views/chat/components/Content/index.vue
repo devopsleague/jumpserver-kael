@@ -69,13 +69,13 @@ const onSendHandle = () => {
 
 const initWebSocket = () => {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const path = `${protocol}://${window.location.host}/kael/chat`
+  const path = `${protocol}://${window.location.host}/kael/chat/`
   createWebSocket(path, onWebSocketMessage)
 }
 
 const onStopHandle = () => {
   $axios.post(
-    '/interrupt_current_ask',
+    '/interrupt_current_ask/',
     { id: currentConversationId.value || '' }
   ).then(res => {
     console.log('res:----------------', res)
@@ -109,8 +109,7 @@ onUnmounted(() => {
               :item="item"
               :message="item.message"
               @delete="handleDelete(index)"
-            />
-            
+            />   
           </div>
         </div>
       </div>
@@ -133,7 +132,6 @@ onUnmounted(() => {
           <template #suffix>
             <n-button
               quaternary
-              type="primary"
               class="ml-10px"
               :disabled="loading"
               @click="onSendHandle"
@@ -154,9 +152,14 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
 }
-.n-input {
-  height: 58px;
-  line-height: 58px;
-  border-radius: 12px;
+.footer {
+  .n-input {
+    height: 58px;
+    line-height: 58px;
+    border-radius: 12px;
+    &:hover {
+      border-color: #dcdfe6 !important;
+    }
+  }
 }
 </style>
