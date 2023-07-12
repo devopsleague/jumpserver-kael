@@ -37,7 +37,7 @@ class ChatGPTManager:
         self.api_key = api_key
         self.model = model if model else 'gpt-3.5-turbo'
         self.session = make_session(proxy)
-        logger.info(f"api_key: {api_key}, model: {model}, proxy: {proxy}")
+        logger.info(f"model: {model}, proxy: {proxy}")
 
     async def ask(
             self, content: str, history_asks: list = None,
@@ -103,6 +103,6 @@ class ChatGPTManager:
         except httpx.TimeoutException:
             error_message = 'Connect chat GPT timeout'
             raise Exception(error_message)
-        except httpx.ConnectError as e:
-            error_message = f'Connect chat GPT error {e}'
+        except httpx.ConnectError:
+            error_message = f'Connect chat GPT error'
             raise Exception(error_message)
