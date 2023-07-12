@@ -24,11 +24,17 @@ const onWebSocketMessage = (data) => {
   currentConversationId.value = data?.conversation_id
   const types = ['waiting', 'reject', 'error']
   if (types.includes(data.type)) {
-    if (hasChat(data.message.id)) {
-      addChatConversationById(data)
-    } else {
-      updateChatConversationContentById(data.message.id, data.system_message.content)
+    data = {
+      ...data,
+      error: 'error',
+      message: {
+        content: data.system_message,
+        role: 'assistant',
+        create_time: new Date()
+      }
     }
+    addChatConversationById(data)
+    setLoading(false)
   }
   if (data.type === 'message') {
     currentConversationId.value = data.conversation_id
@@ -69,7 +75,7 @@ const initWebSocket = () => {
 
 const onStopHandle = () => {
   $axios.post(
-    '/kael/interrupt_current_ask',
+    '/interrupt_current_ask',
     { id: currentConversationId.value || '' }
   ).then(res => {
     console.log('res:----------------', res)
@@ -104,17 +110,18 @@ onUnmounted(() => {
               :message="item.message"
               @delete="handleDelete(index)"
             />
-            <div v-if="loading" class="sticky bottom-0 left-0 flex justify-center">
-              <n-button type="warning" @click="onStopHandle()">
-                <i class="fa fa-stop-circle-o mr-4px"></i> 停止
-              </n-button>
-            </div>
+            
           </div>
         </div>
       </div>
     </main>
-    <footer class="footer p-4 dark:bg-[#343540]">
-      <div class="flex w-800px mx-auto">
+    <footer class="footer dark:bg-[#343540]">
+      <div v-if="loading" class="sticky bottom-0 left-0 flex justify-center">
+        <n-button type="warning" @click="onStopHandle()">
+          <i class="fa fa-stop-circle-o mr-4px"></i> 停止
+        </n-button>
+      </div>
+      <div class="flex w-800px mx-auto  p-4">
         <n-input
           v-model:value="value"
           type="text"

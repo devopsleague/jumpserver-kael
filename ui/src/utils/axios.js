@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const service = axios.create({
-  baseURL: process.env.VITE_APP_API_BASE_URL,
+  baseURL: '/kael',
   withCredentials: true,
   timeout: 10000
 })
