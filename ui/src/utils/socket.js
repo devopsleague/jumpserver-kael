@@ -1,5 +1,6 @@
 import { useChatStore } from '@/store'
 import { getUrlParams } from './common.js'
+import { MESSAGES, LunaEvent } from '@/utils/luna'
 
 let ws= null; // 建立的连接
 let lockReconnect= false; // 是否真正建立连接
@@ -10,11 +11,13 @@ let timeoutNum= null; // 断开 重连倒计时
 let globalCallback = null; //监听服务端消息
 let globalUri = null
 let chatStore = null
+let lunaEvent = null
 
 // uri: 长链接地址
 // callback: 服务端消息回调函数
 export function createWebSocket(uri = globalUri, callback = globalCallback) {
   chatStore = useChatStore()
+  lunaEvent = new LunaEvent()
   globalUri = uri
   globalCallback = callback
 
@@ -79,6 +82,7 @@ export function onClose(){
     error: 'error'
   }
   chatStore.addChatsById(chat)
+  lunaEvent.sendEventToLuna(MESSAGES.CLOSE)
 }
 
 // 断开关闭

@@ -78,10 +78,9 @@ const onStopHandle = () => {
   $axios.post(
     '/interrupt_current_ask/',
     { id: currentConversationId.value || '' }
-  ).then(res => {
-    console.log('res:----------------', res)
+  ).finally(() => {
+    setLoading(false)
   })
-  setLoading(false)
 }
 
 const onKeyUpEnter = () => {
