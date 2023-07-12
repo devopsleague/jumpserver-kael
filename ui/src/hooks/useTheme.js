@@ -17,7 +17,10 @@ export function useTheme() {
   const themeOverrides = computed(() => {
     if (isDark.value) {
       return {
-        common: {}
+        common: {},
+        Button: {
+          borderHover: '1px solid rgba(255, 255, 255, 0.3)'
+        }
       }
     }
     return {}

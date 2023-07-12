@@ -4,6 +4,7 @@ import Message from '../Message/index.vue'
 import { useChat } from '../../hooks/useChat.js'
 import { createWebSocket, onSend, closeWs } from '@/utils/socket'
 import { useChatStore } from '@/store'
+import Empty from './Empty.vue'
 import { pageScroll } from '@/utils/common'
 
 const { hasChat, setLoading, addChatConversationById, updateChatConversationContentById } = useChat()
@@ -102,7 +103,10 @@ onUnmounted(() => {
     <main class="flex-1 overflow-y-auto dark:bg-[#343540]">
       <div id="scrollRef" class="overflow-hidden pt-4 pb-4">
         <div>
-          <div class="overflow-y-auto">
+          <template v-if="!currentSessionStore.chats?.length">
+            <Empty />
+          </template>
+          <div v-else class="overflow-y-auto">
             <Message
               v-for="(item, index) of currentSessionStore.chats"
               :key="index"
@@ -125,7 +129,7 @@ onUnmounted(() => {
           v-model:value="value"
           type="text"
           placeholder="来说点什么吧..."
-          class="dark:bg-[#40414f]"
+          class="dark:bg-[#40414f] hover:border-transparent"
           :disabled="loading"
           @keyup.enter="onKeyUpEnter"
         >
@@ -157,9 +161,6 @@ onUnmounted(() => {
     height: 58px;
     line-height: 58px;
     border-radius: 12px;
-    &:hover {
-      border-color: #dcdfe6 !important;
-    }
   }
 }
 </style>
