@@ -1,8 +1,7 @@
 chat_gpt:
   openai_base_url: https://api.openai.com/v1/
   proxy:
-  connect_timeout: 10
-  read_timeout: 20
+  timeout: 5
 http:
   host: 127.0.0.1
   port: 8080

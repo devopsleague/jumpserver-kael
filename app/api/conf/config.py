@@ -24,8 +24,7 @@ class HttpSetting(BaseModel):
 class ChatGPTSetting(BaseModel):
     openai_base_url: str = 'https://api.openai.com/v1/'
     proxy: Optional[str] = None
-    connect_timeout: int = Field(4, ge=1)
-    read_timeout: int = Field(8, ge=1)
+    timeout: int = Field(5, ge=1)
     api_key: Optional[str] = None
 
 

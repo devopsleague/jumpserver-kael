@@ -134,6 +134,7 @@ def chat_func(ask_request: AskRequest, manager: ChatGPTManager):
                     )
                 )
         except Exception as e:
+            logger.error(f"chat error: {e}")
             await reply(
                 websocket, AskResponse(
                     type=AskResponseType.error,
