@@ -20,9 +20,9 @@ def make_session(proxy: Optional[str] = None) -> httpx.AsyncClient:
             'http://': proxy,
             'https://': proxy,
         }
-        session = httpx.AsyncClient(proxies=proxies, timeout=None)
+        session = httpx.AsyncClient(proxies=proxies)
     else:
-        session = httpx.AsyncClient(timeout=None)
+        session = httpx.AsyncClient()
     return session
 
 
@@ -61,44 +61,44 @@ class ChatGPTManager:
         text_content = ''
         reply_message = None
 
-        read_timeout = settings.chat_gpt.read_timeout
-        connect_timeout = settings.chat_gpt.connect_timeout
-        timeout = httpx.Timeout(read_timeout, connect=connect_timeout)
-        async with self.session.stream(
-                method="POST",
-                url=f"{base_url}chat/completions",
-                json=data,
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                timeout=timeout
-        ) as response:
-            async for line in response.aiter_lines():
-                if not line or line is None:
-                    continue
-                if "data: " in line:
-                    line = line[6:]
-                if "[DONE]" in line:
-                    break
+        timeout = httpx.Timeout(settings.chat_gpt.timeout)
+        try:
+            async with self.session.stream(
+                    method="POST",
+                    url=f"{base_url}chat/completions",
+                    json=data,
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    timeout=timeout
+            ) as response:
+                async for line in response.aiter_lines():
+                    if not line or line is None:
+                        continue
+                    if "data: " in line:
+                        line = line[6:]
+                    if "[DONE]" in line:
+                        break
+                    try:
+                        line = json.loads(line)
+                        resp = ChatGPTResponse(**line)
 
-                try:
-                    line = json.loads(line)
-                    resp = ChatGPTResponse(**line)
+                        if resp.choices[0].delta is not None:
+                            text_content += resp.choices[0].delta.get('content', '')
+                        if reply_message is None:
+                            reply_message = ChatGPTMessage(
+                                id=uuid.uuid4(),
+                                role='assistant',
+                                create_time=datetime.now(),
+                                content=text_content,
+                                parent=message_id,
+                            )
+                        else:
+                            reply_message.content = text_content
 
-                    if resp.choices[0].delta is not None:
-                        text_content += resp.choices[0].delta.get('content', '')
-                    if reply_message is None:
-                        reply_message = ChatGPTMessage(
-                            id=uuid.uuid4(),
-                            role='assistant',
-                            create_time=datetime.now(),
-                            content=text_content,
-                            parent=message_id,
-                        )
-                    else:
-                        reply_message.content = text_content
+                        yield reply_message
+                    except json.decoder.JSONDecodeError:
+                        error_message = 'ChatGPTResponse parse json error'
+                        raise Exception(error_message)
 
-                    yield reply_message
-
-                except json.decoder.JSONDecodeError:
-                    logger.warning(f"ChatGPTResponse parse json error")
-                except ValidationError as e:
-                    logger.warning(f"ChatGPTResponse validate error: {e}")
+        except httpx.TimeoutException:
+            error_message = 'Connect chat GPT timeout'
+            raise Exception(error_message)
