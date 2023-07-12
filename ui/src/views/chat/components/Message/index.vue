@@ -3,7 +3,7 @@ import { ref, toRefs, computed } from 'vue'
 import Text from './Text.vue'
 import { useMessage, useDialog } from 'naive-ui'
 import { copy } from '@/utils/common'
-import defaultAvatar from '@/assets/avatar.jpg'
+import defaultAvatar from '@/assets/avatar.png'
 import robot from '@/assets/pwa-192x192.png'
 import dayjs from 'dayjs'
 

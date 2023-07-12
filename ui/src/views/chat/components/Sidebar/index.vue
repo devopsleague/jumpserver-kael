@@ -48,8 +48,7 @@ onMounted(() => {
   >
     <div class="box-border">
       <n-button
-        type="primary"
-        dashed
+        secondary
         class="mb-16px w-1/1"
         :disabled="loading"
         @click="onNewChat"
@@ -96,7 +95,6 @@ onMounted(() => {
   cursor: not-allowed;
 }
 .active-tab {
-  border-color: #36ad6a;
   background-color: #343540;
 }
 </style>
