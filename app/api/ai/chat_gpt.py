@@ -103,3 +103,6 @@ class ChatGPTManager:
         except httpx.TimeoutException:
             error_message = 'Connect chat GPT timeout'
             raise Exception(error_message)
+        except httpx.ConnectError as e:
+            error_message = f'Connect chat GPT error {e}'
+            raise Exception(error_message)
