@@ -32,9 +32,9 @@ class JMSSession(BaseWisp):
     def active_session(self) -> None:
         from .manager import SessionManager
         SessionManager.register_jms_session(self)
+        self.replay_handler = ReplayHandler(self.session)
         self.session_handler = SessionHandler(self.websocket)
         self.command_handler = CommandHandler(self.websocket, self.session, self.command_acls)
-        self.replay_handler = ReplayHandler(self.session)
 
     def close(self) -> None:
         from .manager import SessionManager
@@ -46,23 +46,24 @@ class JMSSession(BaseWisp):
     async def with_audit(self, command: str, chat_func):
         command_record = CommandRecord(input=command)
         try:
-            is_continue = await self.command_handler.command_acl_filter(command_record)
+            self.command_handler.command_record = command_record
+            is_continue = await self.command_handler.command_acl_filter()
             asyncio.create_task(self.replay_handler.write_input(command_record.input))
             if not is_continue:
                 return
 
             result = await chat_func(self)
             command_record.output = result
-            asyncio.create_task(self.replay_handler.write_input(command_record.output))
+            asyncio.create_task(self.replay_handler.write_output(command_record.output))
             return result
 
         except Exception as e:
             error = str(e)
-            asyncio.create_task(self.replay_handler.write_input(error))
+            asyncio.create_task(self.replay_handler.write_output(error))
             raise e
 
         finally:
-            asyncio.create_task(self.command_handler.record_command(command_record))
+            asyncio.create_task(self.command_handler.record_command())
 
 
 class SessionHandler(BaseWisp):

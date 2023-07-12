@@ -14,15 +14,15 @@ LOGGING = {
     'formatters': {
         'simple': {
             'format': '%(asctime)s.%(msecs)03d %(levelname)8s: [%(name)s]\t%(message)s',
-            'datefmt': '%Y/%m/%d %H:%M:%S'
+            'datefmt': '%Y-%m-%d %H:%M:%S'
         },
         'proxy-output': {
             'format': '%(message)s',
-            'datefmt': '%Y/%m/%d %H:%M:%S'
+            'datefmt': '%Y-%m-%d %H:%M:%S'
         },
         'colored': {
             '()': 'colorlog.ColoredFormatter',
-            'datefmt': '%Y/%m/%d %H:%M:%S',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
             'format': '%(asctime)s.%(msecs)03d %(log_color)s%(levelname)8s%(reset)s: %(cyan)s[%(name)s]%(reset)s %(message)s',
         }
     },

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from datetime import datetime
 
 from api import globals
 from jms.base import BaseWisp
@@ -58,11 +59,14 @@ class ReplayHandler(BaseWisp):
             logger.error(error_message)
 
     async def write_input(self, input_str):
-        input_str = f"[Input]: \r\n {input_str}"
+        # TODO 后续时间处理要统一
+        current_time = datetime.now()
+        formatted_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        input_str = f"[{formatted_time}]#: \r\n {input_str} \r\n"
         self.write_row(input_str)
 
-    def write_output(self, output_str):
-        output_str = f"[Output]: \r\n {output_str} \r\n"
+    async def write_output(self, output_str):
+        output_str = f"\r\n {output_str} \r\n"
         self.write_row(output_str)
 
     def upload(self):
