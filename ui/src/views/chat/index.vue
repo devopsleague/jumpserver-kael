@@ -1,9 +1,14 @@
 <script setup>
+import { onMounted } from 'vue'
 import Sidebar from './components/Sidebar/index.vue'
 import Content from './components/Content/index.vue'
-import { useMessage } from 'naive-ui'
+import { LunaEvent } from '@/utils/luna'
 
-window.$message = useMessage()
+const lunaEvent = new LunaEvent()
+
+onMounted(() => {
+  lunaEvent.init()
+})
 
 </script>
 
