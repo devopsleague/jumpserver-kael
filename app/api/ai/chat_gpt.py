@@ -1,10 +1,9 @@
 import json
 import uuid
-from datetime import datetime
-from typing import Optional
-
 import httpx
-from pydantic import ValidationError
+from typing import Optional
+from datetime import datetime
+from urllib.parse import urljoin
 
 from api.conf import settings
 from api.message import ChatGPTMessage
@@ -16,10 +15,7 @@ logger = get_logger(__name__)
 
 def make_session(proxy: Optional[str] = None) -> httpx.AsyncClient:
     if proxy:
-        proxies = {
-            'http://': proxy,
-            'https://': proxy,
-        }
+        proxies = {'http://': proxy, 'https://': proxy}
         session = httpx.AsyncClient(proxies=proxies)
     else:
         session = httpx.AsyncClient()
@@ -30,25 +26,25 @@ class ChatGPTManager:
 
     def __init__(
             self,
+            base_url: Optional[str] = None,
             api_key: Optional[str] = None,
             model: Optional[str] = None,
             proxy: Optional[str] = None,
     ):
         self.api_key = api_key
+        self.api_url = urljoin(base_url, 'chat/completions')
         self.model = model if model else 'gpt-3.5-turbo'
         self.session = make_session(proxy)
-        logger.info(f"model: {model}, proxy: {proxy}")
+        logger.info(f"api_url: {self.api_url} model: {model}, proxy: {proxy}")
 
     async def ask(
             self, content: str, history_asks: list = None,
             extra_args: Optional[dict] = None, **_kwargs
     ):
         message_id = uuid.uuid4()
-
         history_asks.append(content)
         messages = history_asks[-10:]
 
-        base_url = settings.chat_gpt.openai_base_url
         data = {
             "model": self.model,
             "messages": [
@@ -61,15 +57,13 @@ class ChatGPTManager:
 
         text_content = ''
         reply_message = None
-
-        timeout = httpx.Timeout(settings.chat_gpt.timeout)
         try:
             async with self.session.stream(
                     method="POST",
-                    url=f"{base_url}chat/completions",
+                    url=self.api_url,
                     json=data,
                     headers={"Authorization": f"Bearer {self.api_key}"},
-                    timeout=timeout
+                    timeout=httpx.Timeout(settings.chat_gpt.timeout)
             ) as response:
                 async for line in response.aiter_lines():
                     if not line or line is None:

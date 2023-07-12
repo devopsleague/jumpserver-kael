@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.post("/interrupt_current_ask")
+@router.post("/interrupt_current_ask/")
 async def interrupt_current_ask(conversation: Conversation):
     jms_session = SessionManager.get_jms_session(conversation.id)
     if jms_session:
@@ -39,15 +39,16 @@ async def create_auth_info(token: Optional[str] = None) -> TokenAuthInfo:
     return auth_info
 
 
-@router.websocket("/chat")
+@router.websocket("/chat/")
 async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_auth_info)):
     session_handler = SessionHandler(websocket)
     await websocket.accept()
     current_jms_sessions = []
     api_key = auth_info.account.secret
     proxy = auth_info.asset.specific.http_proxy
+    base_url = auth_info.asset.address
     model = auth_info.platform.protocols[0].settings.get('api_mode')
-    manager = ChatGPTManager(api_key=api_key, model=model, proxy=proxy)
+    manager = ChatGPTManager(base_url=base_url, api_key=api_key, model=model, proxy=proxy)
     try:
         async for message in websocket.iter_text():
             try:

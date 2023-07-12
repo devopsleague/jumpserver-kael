@@ -9,7 +9,7 @@ router = APIRouter()
 upTime = datetime.datetime.now()
 
 
-@router.get("/health")
+@router.get("/health/")
 async def health():
     status = {}
     now = datetime.datetime.now()
