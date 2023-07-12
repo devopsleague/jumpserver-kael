@@ -15,7 +15,7 @@ export default defineConfig({
   define: {
     'process.env': {
       VITE_APP_API_BASE_URL: 'http://127.0.0.1:8083',
-      VITE_APP_BASE_SOCKET: 'ws://127.0.0.1:8083/kael/chat'
+      VITE_APP_BASE_SOCKET: 'ws://127.0.0.1:8083'
     }
   },
   server: {
