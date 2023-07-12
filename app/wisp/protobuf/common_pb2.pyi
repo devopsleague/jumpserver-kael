@@ -15,14 +15,14 @@ class RiskLevel(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     Normal: _ClassVar[RiskLevel]
     Warning: _ClassVar[RiskLevel]
     Reject: _ClassVar[RiskLevel]
-    ReviewRejection: _ClassVar[RiskLevel]
+    ReviewReject: _ClassVar[RiskLevel]
     ReviewAccept: _ClassVar[RiskLevel]
     ReviewCancel: _ClassVar[RiskLevel]
 KillSession: TaskAction
 Normal: RiskLevel
 Warning: RiskLevel
 Reject: RiskLevel
-ReviewRejection: RiskLevel
+ReviewReject: RiskLevel
 ReviewAccept: RiskLevel
 ReviewCancel: RiskLevel
 
@@ -160,10 +160,12 @@ class CommandACL(_message.Message):
         Reject: _ClassVar[CommandACL.Action]
         Accept: _ClassVar[CommandACL.Action]
         Review: _ClassVar[CommandACL.Action]
+        Warning: _ClassVar[CommandACL.Action]
         Unknown: _ClassVar[CommandACL.Action]
     Reject: CommandACL.Action
     Accept: CommandACL.Action
     Review: CommandACL.Action
+    Warning: CommandACL.Action
     Unknown: CommandACL.Action
     ID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]

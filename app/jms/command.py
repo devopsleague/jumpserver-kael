@@ -33,8 +33,9 @@ class CommandHandler(BaseWisp):
         self.session = session
         self.websocket = websocket
         self.command_acls = command_acls
+        self.command_record: Optional[CommandRecord] = None
 
-    async def record_command(self, command_record: CommandRecord):
+    async def record_command(self):
         req = service_pb2.CommandRequest(
             sid=self.session.id,
             org_id=self.session.org_id,
@@ -42,9 +43,9 @@ class CommandHandler(BaseWisp):
             account=self.session.account,
             user=self.session.user,
             timestamp=int(datetime.timestamp(datetime.now())),
-            input=command_record.input,
-            output=command_record.output,
-            risk_level=command_record.risk_level
+            input=self.command_record.input,
+            output=self.command_record.output,
+            risk_level=self.command_record.risk_level
         )
         resp = self.stub.UploadCommand(req)
         if not resp.status.ok:
@@ -52,7 +53,7 @@ class CommandHandler(BaseWisp):
             logger.error(error_message)
             raise WispError(error_message)
 
-    async def match_rule(self, command: str):
+    async def match_rule(self):
         for command_acl in self.command_acls:
             for command_group in command_acl.command_groups:
                 flags = re.UNICODE
@@ -60,7 +61,7 @@ class CommandHandler(BaseWisp):
                     flags |= re.IGNORECASE
                 try:
                     pattern = re.compile(command_group.pattern, flags)
-                    if pattern.search(command.lower()) is not None:
+                    if pattern.search(self.command_record.input.lower()) is not None:
                         return command_acl
                 except re.error as e:
                     error_message = f'Failed to re invalid pattern: {command_group.pattern} {e}'
@@ -68,9 +69,9 @@ class CommandHandler(BaseWisp):
                     # TODO Exception
                     raise Exception(error_message)
 
-    async def create_and_wait_ticket(self, command: str, command_acl: CommandACL) -> bool:
+    async def create_and_wait_ticket(self, command_acl: CommandACL) -> bool:
         req = service_pb2.CommandConfirmRequest(
-            cmd=command,
+            cmd=self.command_record.input,
             session_id=self.session.id,
             cmd_acl_id=command_acl.id
         )
@@ -103,19 +104,28 @@ class CommandHandler(BaseWisp):
                 error_message = f'Failed to check ticket status: {check_response.status.err}'
                 logger.error(error_message)
                 break
-
+            system_message = ''
             state = check_response.Data.state
             if state == service_pb2.TicketState.Approved:
+                self.command_record.risk_level = RiskLevel.ReviewAccept
                 is_continue = True
                 ticket_closed = True
                 break
-            elif state in [service_pb2.TicketState.Rejected, service_pb2.TicketState.Closed]:
+            elif state == service_pb2.TicketState.Rejected:
+                self.command_record.risk_level = RiskLevel.ReviewReject
                 ticket_closed = True
+                system_message = 'The ticket is rejected'
+            elif state == service_pb2.TicketState.Closed:
+                self.command_record.risk_level = RiskLevel.ReviewCancel
+                ticket_closed = False
+                system_message = 'The ticket is closed'
+
+            if state in [service_pb2.TicketState.Rejected, service_pb2.TicketState.Closed]:
                 await reply(
                     self.websocket, AskResponse(
                         type=AskResponseType.waiting,
                         conversation_id=self.session.id,
-                        system_message=f'工单关闭或拒绝'
+                        system_message=system_message
                     )
                 )
                 break
@@ -127,12 +137,13 @@ class CommandHandler(BaseWisp):
 
         return is_continue
 
-    async def command_acl_filter(self, command: CommandRecord):
-        is_continue = False
-        acl = await self.match_rule(command.input)
+    async def command_acl_filter(self):
+        is_continue = True
+        acl = await self.match_rule()
         if acl is not None:
-            command.risk_level = RiskLevel.Danger
             if acl.action == CommandACL.Reject:
+                is_continue = False
+                self.command_record.risk_level = RiskLevel.Reject
                 await reply(
                     self.websocket, AskResponse(
                         type=AskResponseType.reject,
@@ -141,14 +152,9 @@ class CommandHandler(BaseWisp):
                     )
                 )
             elif acl.action == CommandACL.Review:
-                try:
-                    is_continue = await self.create_and_wait_ticket(command.input, acl)
-                except Exception as e:
-                    print(command.input, str(e))
-            else:
-                is_continue = True
-        else:
-            is_continue = True
+                is_continue = await self.create_and_wait_ticket(acl)
+            elif acl.action == CommandACL.Warning:
+                self.command_record.risk_level = RiskLevel.Warning
         return is_continue
 
     def close_ticket(self, ticket_info: service_pb2.TicketInfo):

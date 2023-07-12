@@ -91,7 +91,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
                 logger.error(e)
 
     except WebSocketDisconnect as e:
-        logger.error('Web socket disconnect', e)
+        logger.warning('Web socket disconnect', e)
         for jms_session in current_jms_sessions:
             jms_session.close()
 
