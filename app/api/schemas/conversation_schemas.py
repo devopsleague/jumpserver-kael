@@ -1,4 +1,3 @@
-import uuid
 from enum import auto
 from typing import Optional
 

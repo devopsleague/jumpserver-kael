@@ -9,7 +9,7 @@ from starlette.responses import Response
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from api.ai import ChatGPTManager
-from api.message import ChatGPTMessage, Conversation
+from api.message import ChatGPTMessage, Conversation, MessageType
 from api.schemas import AskRequest, AskResponse, AskResponseType
 from jms import SessionHandler, JMSSession, TokenHandler, SessionManager
 from wisp.protobuf.common_pb2 import TokenAuthInfo
@@ -49,6 +49,11 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
     base_url = auth_info.asset.address
     model = auth_info.platform.protocols[0].settings.get('api_mode')
     manager = ChatGPTManager(base_url=base_url, api_key=api_key, model=model, proxy=proxy)
+
+    if not await manager.ping():
+        await websocket.close(status.WS_1008_POLICY_VIOLATION)
+        return
+
     try:
         async for message in websocket.iter_text():
             try:
@@ -99,41 +104,33 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
 def chat_func(ask_request: AskRequest, manager: ChatGPTManager):
     async def inner(jms_session: JMSSession):
         websocket = jms_session.websocket
-        conversation_id = jms_session.session.id
         history_asks = jms_session.history_asks
+        conversation_id = jms_session.session.id
         last_content = ''
+        interrupt = False
         try:
             async for message in manager.ask(
                     content=ask_request.content,
-                    conversation_id=conversation_id,
                     history_asks=history_asks
             ):
+                assert isinstance(message, ChatGPTMessage)
+                last_content = message.content
 
                 if jms_session.current_ask_interrupt:
+                    interrupt = True
+                    message.type = MessageType.finish
                     jms_session.current_ask_interrupt = False
+
+                response_message = AskResponse(
+                    type=AskResponseType.message,
+                    conversation_id=conversation_id,
+                    message=message
+                )
+
+                await reply(websocket, response_message)
+
+                if interrupt:
                     break
-
-                try:
-                    assert isinstance(message, ChatGPTMessage)
-                    last_content = message.content
-                except Exception as e:
-                    logger.warning(f"convert message error: {e}")
-                    continue
-
-                await reply(
-                    websocket, AskResponse(
-                        type=AskResponseType.message,
-                        conversation_id=conversation_id,
-                        message=message
-                    )
-                )
-            else:
-                await reply(
-                    websocket, AskResponse(
-                        type=AskResponseType.finish,
-                        conversation_id=conversation_id
-                    )
-                )
         except Exception as e:
             logger.error(f"chat error: {e}")
             await reply(

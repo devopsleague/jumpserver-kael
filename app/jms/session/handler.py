@@ -1,14 +1,17 @@
 import asyncio
 from typing import Optional
+from fastapi.encoders import jsonable_encoder
 from starlette.websockets import WebSocket
 
 from datetime import datetime
 from jms.base import BaseWisp
 
+from api.schemas import AskResponse, AskResponseType
 from wisp.protobuf import service_pb2
 from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import TokenAuthInfo, Session
 from utils.logger import get_logger
+from utils.ws import reply
 from ..replay import ReplayHandler
 from ..command import CommandHandler, CommandRecord
 
@@ -42,6 +45,14 @@ class JMSSession(BaseWisp):
         self.replay_handler.upload()
         self.session_handler.close_session(self.session)
         SessionManager.unregister_jms_session(self)
+
+    async def notify_to_close(self):
+        response = AskResponse(
+            type=AskResponseType.finish,
+            conversation_id=self.session.id,
+            system_message='Session is interrupt'
+        )
+        await reply(self.websocket, response)
 
     async def with_audit(self, command: str, chat_func):
         command_record = CommandRecord(input=command)
