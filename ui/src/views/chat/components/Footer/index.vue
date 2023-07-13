@@ -11,6 +11,8 @@ const loading = computed(() => {
 })
 
 const onSendHandle = () => {
+  if (!value.value) return
+
   emit('send', value.value)
   value.value = ''
 }

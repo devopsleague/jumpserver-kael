@@ -16,10 +16,10 @@ onMounted(() => {
   <div class="root">
     <n-layout
       has-sider
-      class="root-layout dark:bg-gray-800"
+      class="root-layout"
     >
       <Sidebar />
-      <n-layout-content>
+      <n-layout-content class="dark:bg-[#343540]">
         <Content />
       </n-layout-content>
     </n-layout>
