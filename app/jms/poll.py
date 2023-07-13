@@ -1,5 +1,6 @@
 import os
 import queue
+import asyncio
 import threading
 
 from api import globals
@@ -15,6 +16,10 @@ logger = get_logger(__name__)
 
 
 class PollJMSEvent(BaseWisp):
+    @staticmethod
+    async def close_and_notify(target_session):
+        target_session.close()
+        await target_session.notify_to_close()
 
     def clear_zombie_session(self):
         replay_dir = os.path.join(globals.PROJECT_DIR, 'data/replay')
@@ -42,7 +47,7 @@ class PollJMSEvent(BaseWisp):
                     break
             if target_session is not None:
                 if task_action == KillSession:
-                    target_session.close()
+                    asyncio.run(self.close_and_notify(target_session))
 
                 req = service_pb2.FinishedTaskRequest(task_id=target_session.session.id)
                 self.stub.FinishSession(req)

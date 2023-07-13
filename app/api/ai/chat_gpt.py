@@ -6,7 +6,7 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from api.conf import settings
-from api.message import ChatGPTMessage
+from api.message import ChatGPTMessage, MessageType
 from api.schemas import ChatGPTResponse
 from utils.logger import get_logger
 
@@ -32,10 +32,23 @@ class ChatGPTManager:
             proxy: Optional[str] = None,
     ):
         self.api_key = api_key
+        self.ping_url = urljoin(base_url, 'models')
         self.api_url = urljoin(base_url, 'chat/completions')
         self.model = model if model else 'gpt-3.5-turbo'
         self.session = make_session(proxy)
         logger.info(f"api_url: {self.api_url} model: {model}, proxy: {proxy}")
+
+    async def ping(self):
+        try:
+            response = await self.session.get(
+                url=self.ping_url,
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                timeout=httpx.Timeout(2)
+            )
+            return response.status_code == 200
+        except Exception:
+            await self.session.aclose()
+            return
 
     async def ask(
             self, content: str, history_asks: list = None,
@@ -94,9 +107,12 @@ class ChatGPTManager:
                         error_message = 'ChatGPTResponse parse json error'
                         raise Exception(error_message)
 
+                reply_message.type = MessageType.finish
+                yield reply_message
+
         except httpx.TimeoutException:
-            error_message = 'Connect chat GPT timeout'
+            error_message = 'Connect Chat GPT timeout'
             raise Exception(error_message)
         except httpx.ConnectError:
-            error_message = f'Connect chat GPT error'
+            error_message = f'Connect Chat GPT error'
             raise Exception(error_message)
