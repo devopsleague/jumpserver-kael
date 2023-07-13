@@ -21,6 +21,7 @@ const options = computed(() => {
     {
       label: '复制',
       key: 'copyText',
+      icons: 'fa fa-clipboard',
       props: {
         onClick: () => {
           console.log('item: ', item)
@@ -32,6 +33,7 @@ const options = computed(() => {
     // {
     //   label: '删除',
     //   key: 'delete',
+    //   icons: 'fa fa-trash-o',
     //   props: {
     //     onClick: () => {
     //       NDialog.warning({
@@ -64,11 +66,18 @@ const options = computed(() => {
           <span>
             {{ dayjs(item.message?.create_time).format('YYYY-MM-DD HH:mm:ss') }}
           </span>
-          <n-dropdown trigger="hover" :options="options">
-            <div style="display: inline-block; color: #b6bdc6; align-self: end;" class="hover:cursor-pointer">
-              <i class="fa fa-ellipsis-v"></i>
-            </div>
-          </n-dropdown>
+          <div class="inline-block">
+            <span v-if="options.length < 3">
+              <span v-for="(item) in options" class="cursor-pointer hover:text-light-100">
+                <i :class="item.icons" class="ml-4px" @click="item.props.onClick"></i>
+              </span>
+            </span>
+            <n-dropdown v-else trigger="hover" :options="options">
+              <div style="display: inline-block; color: #b6bdc6; align-self: end;" class="hover:cursor-pointer">
+                <i class="fa fa-ellipsis-v"></i>
+              </div>
+            </n-dropdown>
+          </div>
         </p>
         <div class="message flex">
           <Text :message="item.message" :as-raw-text="asRawText" :error="item?.error" />

@@ -40,7 +40,6 @@ export const useChatStore = defineStore('chat-store', {
       }
     },
   
-
     // 过滤当前的聊天
     filterCurrentChat () {
       this.filterChat = this.sessionsStore.filter((chat) => chat.id === this.activeTab)?.[0] || {}

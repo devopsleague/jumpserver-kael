@@ -20,7 +20,7 @@ export const pageScroll = (
 ) => {
   setTimeout(() => {
     const dom = document.getElementById(el)
-    dom.scrollIntoView(scrollOption)
+    dom?.scrollIntoView(scrollOption)
   }, 0)
 }
 
