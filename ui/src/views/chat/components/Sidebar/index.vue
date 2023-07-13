@@ -1,23 +1,11 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useChatStore } from '@/store'
 
 const chatStore = useChatStore()
-const tabNum = computed(() => chatStore.tabNum)
 const activeTab = computed(() => chatStore.activeTab)
 const sessions = computed(() => chatStore.sessionsStore)
 const loading = computed(() => chatStore.loading)
-
-const onNewChat = () => {
-  chatStore.setTabNum()
-  const data = {
-    id: tabNum.value,
-    name: 'new chat ' + tabNum.value,
-    chats: []
-  }
-  chatStore.addSessionsStore(data)
-}
-
 
 const switchTab = (id) => {
   if (loading.value) return
@@ -25,15 +13,14 @@ const switchTab = (id) => {
   chatStore.setActiveNum(id)
 }
 
+const onNewChat = () => {
+  chatStore.setTabNum()
+  chatStore.setActiveNum(chatStore.tabNum)
+}
+
 const onDelete = (id) => {
   chatStore.removeSessionsStore(id)
 }
-
-onMounted(() => {
-  if (sessions.value.length < 1) {
-    onNewChat()
-  }
-})
 
 </script>
 <template>
@@ -49,11 +36,11 @@ onMounted(() => {
     <div class="box-border">
       <n-button
         secondary
-        class="mb-16px w-1/1"
+        class="mb-16px w-full border border-solid border-[#545557]"
         :disabled="loading"
         @click="onNewChat"
       >
-        New chat
+        <i class="fa fa-plus mr-12px"></i>New chat
       </n-button>
       <div 
         v-for="(item, index) in sessions"

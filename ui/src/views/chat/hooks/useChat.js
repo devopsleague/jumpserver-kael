@@ -8,10 +8,28 @@ export function useChat() {
     chatStore.setLoading(loading)
   }
 
+  const onNewChat = (name) => {
+    chatStore.setTabNum()
+    console.log('chatStore: ', chatStore);
+    const data = {
+      name: name || `new chat ${chatStore.tabNum}`,
+      id: chatStore.tabNum,
+      chats: []
+    }
+    chatStore.addSessionsStore(data)
+  } 
+
   const addChatConversationById = (chat) => {
     chatStore.filterCurrentChat()
     chatStore.addChatsById(chat)
     pageScroll('scrollRef')
+  }
+
+  const onNewChatOrAddChatConversationById = (chat) => {
+    debugger
+    onNewChat(chat.message.content)
+    addChatConversationById(chat)
+    console.log(chatStore.sessionsStore)
   }
 
   const updateChatConversationContentById = (id, content) => {
@@ -30,6 +48,8 @@ export function useChat() {
 
   return {
     chatStore,
+    onNewChat,
+    onNewChatOrAddChatConversationById,
     hasChat,
     setLoading,
     addChatConversationById,
