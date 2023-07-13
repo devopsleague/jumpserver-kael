@@ -3,6 +3,7 @@ import { ref, onMounted, computed, inject, onUnmounted } from 'vue'
 import Message from '../Message/index.vue'
 import Empty from '../Empty/index.vue'
 import Footer from '../Footer/index.vue'
+import Loading from '@/components/Loading/index.vue'
 import { useChat } from '../../hooks/useChat.js'
 import { createWebSocket, onSend, closeWs } from '@/utils/socket'
 import { useChatStore } from '@/store'
@@ -13,6 +14,10 @@ const chatStore = useChatStore()
 const $axios = inject("$axios")
 const currentConversationId = ref('')
 
+
+const loading = computed(() => {
+  return chatStore.loading
+})
 const currentSessionStore = computed(() => {
   return chatStore.filterChat
 })
@@ -20,7 +25,7 @@ const currentSessionStore = computed(() => {
 const onWebSocketMessage = (data) => {
   setLoading(true)
   currentConversationId.value = data?.conversation_id
-  const types = ['waiting', 'reject', 'error']
+  const types = ['waiting', 'reject', 'error', 'finish']
   if (types.includes(data.type)) {
     data = {
       ...data,
@@ -40,11 +45,10 @@ const onWebSocketMessage = (data) => {
       addChatConversationById(data)
     } else {
       updateChatConversationContentById(data.message.id, data.message.content)
-
     }
-  }
-  if (data.type === 'finish') {
-    setLoading(false)
+    if (data.message?.type === 'finish') {
+      setLoading(false)
+    }
   }
 }
 
@@ -79,10 +83,6 @@ const onStopHandle = () => {
   })
 }
 
-const onKeyUpEnter = () => {
-  onSendHandle()
-}
-
 onMounted(() => {
   initWebSocket()
   pageScroll('scrollRef')
@@ -98,24 +98,25 @@ onUnmounted(() => {
     <Empty />
   </template>
   <div v-else class="content">
+    <Loading v-if="loading" />
     <main class="flex-1 overflow-y-auto dark:bg-[#343540]">
       <div id="scrollRef" class="overflow-hidden pt-4 pb-4">
         <div>
           <div class="overflow-y-auto">
             <Message
-              v-for="(item, index) of currentSessionStore.chats"
-              :key="index"
-              :item="item"
-              :message="item.message"
-              @delete="handleDelete(index)"
+            v-for="(item, index) of currentSessionStore.chats"
+            :key="index"
+            :item="item"
+            :message="item.message"
+            @delete="handleDelete(index)"
             />   
           </div>
         </div>
       </div>
     </main>
     <Footer @send="onSendHandle" @stop="onStopHandle" />
-  </div>
-</template>
+    </div>
+  </template>
 
 <style lang="scss" scoped>
 .content {
