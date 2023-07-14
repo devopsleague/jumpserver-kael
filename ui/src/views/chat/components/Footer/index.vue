@@ -39,6 +39,7 @@ const onKeyUpEnter = () => {
         type="text"
         placeholder="来说点什么吧..."
         class="dark:bg-[#40414f] hover:border-transparent"
+        style="--n-border-hover: 1px solid transparent; --n-color-focus: transparent; --n-border-focus: 1px solid transparent; --n-box-shadow-focus: 0 0 8px 0 rgba(193, 194, 198, 0.3);"
         :disabled="loading"
         @keyup.enter="onKeyUpEnter"
       >

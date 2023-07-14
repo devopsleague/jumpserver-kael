@@ -109,34 +109,48 @@ onUnmounted(() => {
 <template>
   <div :class="wrapClass">
     <div ref="textRef" class="leading-relaxed break-words">
-      <div class="inline-block markdown-body" v-html="text" />
-      <span v-if="loading && !role" class="heart"></span>
+      <span v-if="text.length < 10 && !role" class="loading-box">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+      <div v-else class="inline-block markdown-body" v-html="text" />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.heart {
+.loading-box{
+  margin-left: 6px;
+}
+.loading-box span{
   display: inline-block;
-  height: 13px;
-  margin-left: 2px;
+  width: 5px;
+  height: 5px;
+  margin-right: 5px;
+  border-radius: 50%;
   vertical-align: middle;
-  border-left: 2px solid rgb(182, 189, 198);
-  animation: heartbeat 1s infinite;
+  background: rgb(182, 189, 198);
+  animation: load 1.04s ease infinite;
 }
-
-@keyframes heartbeat {
-  0% {
-    transform: scale(1, 1);
+.loading-box span:last-child{
+  margin-right: 0px;
+}
+@keyframes load{
+  0%{
     opacity: 1;
   }
-  25% {
-    transform: scale(1.1, 1.3);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1, 1);
-    opacity: 1;
+  100%{
+    opacity: 0;
   }
 }
+.loading-box span:nth-child(1){
+  animation-delay: 0.13s;
+}
+.loading-box span:nth-child(2){
+  animation-delay: 0.26s;
+}
+.loading-box span:nth-child(3){
+  animation-delay: 0.39s;
+}            
 </style>
