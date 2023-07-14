@@ -87,11 +87,9 @@ export function onClose(){
 
 // 断开关闭
 export function closeWs(){
-  if(lockReconnect) {
-    ws.close()
-    ws = null
-    lockReconnect = false
-  }
+  ws?.close()
+  ws = null
+  lockReconnect = false
 }
  
 // 发送心跳
@@ -100,7 +98,7 @@ export function start () {
   serverTimeoutObj && clearTimeout(serverTimeoutObj);
   timeoutObj = setTimeout(function(){
     // 这里发送一个心跳，后端收到后，返回一个心跳消息
-    if (ws.readyState == 1) {
+    if (ws?.readyState == 1) {
       // 如果连接正常
       console.log('发送心跳')
       ws.send('ping')
