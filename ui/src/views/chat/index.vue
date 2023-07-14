@@ -1,22 +1,13 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted } from 'vue'
 import Sidebar from './components/Sidebar/index.vue'
 import Content from './components/Content/index.vue'
 import { LunaEvent } from '@/utils/luna'
-import { closeWs } from '@/utils/socket'
 
 const lunaEvent = new LunaEvent()
 
 onMounted(() => {
   lunaEvent.init()
-  window.addEventListener('beforeunload', () => {
-    console.log('页面关闭')
-    closeWs()
-  })
-})
-
-onUnmounted(() => {
-  window.removeEventListener('beforeunload')
 })
 
 </script>

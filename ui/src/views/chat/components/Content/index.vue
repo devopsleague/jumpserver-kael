@@ -3,7 +3,6 @@ import { ref, onMounted, computed, inject, onUnmounted } from 'vue'
 import Message from '../Message/index.vue'
 import Empty from '../Empty/index.vue'
 import Footer from '../Footer/index.vue'
-import Loading from '@/components/Loading/index.vue'
 import { useChat } from '../../hooks/useChat.js'
 import { createWebSocket, onSend, closeWs } from '@/utils/socket'
 import { useChatStore } from '@/store'
@@ -86,10 +85,14 @@ const onStopHandle = () => {
 onMounted(() => {
   initWebSocket()
   pageScroll('scrollRef')
+  window.addEventListener('beforeunload', (event) => {
+    event.preventDefault()
+    closeWs()
+  })
 })
 
 onUnmounted(() => {
-  closeWs()
+  window.removeEventListener('beforeunload')
 })
 </script>
 
@@ -98,7 +101,6 @@ onUnmounted(() => {
     <Empty />
   </template>
   <div v-else class="content">
-    <Loading v-if="loading" />
     <main class="flex-1 overflow-y-auto dark:bg-[#343540]">
       <div id="scrollRef" class="overflow-hidden pt-4 pb-4">
         <div>
