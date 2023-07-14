@@ -16,6 +16,7 @@ from wisp.protobuf.common_pb2 import TokenAuthInfo
 from wisp.exceptions import WispError
 
 from utils import reply
+from utils.ws import iter_text
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -55,7 +56,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
         return
 
     try:
-        async for message in websocket.iter_text():
+        async for message in iter_text(websocket):
             try:
                 message = json.loads(message)
             except json.JSONDecodeError:
@@ -95,8 +96,8 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
             except WispError as e:
                 logger.error(e)
 
-    except WebSocketDisconnect as e:
-        logger.warning('Web socket disconnect', e)
+    except WebSocketDisconnect:
+        logger.warning('Web socket disconnect')
         for jms_session in current_jms_sessions:
             jms_session.close()
 
