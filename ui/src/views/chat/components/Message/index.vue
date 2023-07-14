@@ -3,7 +3,6 @@ import { ref, toRefs, computed } from 'vue'
 import Text from './Text.vue'
 import { useMessage, useDialog } from 'naive-ui'
 import { copy } from '@/utils/common'
-import defaultAvatar from '@/assets/avatar.png'
 import robot from '@/assets/pwa-192x192.png'
 import dayjs from 'dayjs'
 
@@ -15,6 +14,9 @@ const { item = {} } = toRefs(props)
 const NMessage = useMessage()
 const NDialog = useDialog()
 const asRawText = ref(props.item.message.role === 'assistant')
+const userAvatar = computed(() => {
+  return '/api/v1/settings/logo/'
+})
 
 const options = computed(() => {
   const common = [
@@ -59,7 +61,7 @@ const options = computed(() => {
     ref="messageRef" :class="{'dark:bg-[#444654]': asRawText}">
     <div class="flex w-800px mx-auto pt-20px pb-20px">
       <div class="avatar mr-6px ml-6px">
-        <n-avatar :src="asRawText ? robot : defaultAvatar" />
+        <n-avatar round :src="asRawText ? robot : userAvatar" />
       </div>
       <div class="overflow-hidden flex-1 text-sm flex flex-col">
         <p style="color: #b6bdc6" class="flex justify-between">
@@ -94,7 +96,6 @@ const options = computed(() => {
   .n-avatar {
     width: 100%;
     height: 100%;
-    border-radius: 50% !important;
   }
 }
 .message {
