@@ -14,12 +14,10 @@ logger = get_logger(__name__)
 
 
 def make_session(proxy: Optional[str] = None) -> httpx.AsyncClient:
+    proxies = None
     if proxy:
         proxies = {'http://': proxy, 'https://': proxy}
-        session = httpx.AsyncClient(proxies=proxies)
-    else:
-        session = httpx.AsyncClient()
-    return session
+    return httpx.AsyncClient(proxies=proxies, timeout=None)
 
 
 class ChatGPTManager:
