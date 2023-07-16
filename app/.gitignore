@@ -26,3 +26,4 @@ data
 docs/_build/
 logs/*
 script.py
+/i18n/messages.pot

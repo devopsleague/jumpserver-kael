@@ -8,9 +8,9 @@ from utils.logger import setup_logger, LOGGING, get_logger
 from wisp import shutdown_protobuf
 
 from api.conf import settings
-from api.middlewares import RequestMiddleware
+from api.middlewares import I18nMiddleware
 from api.routers import chat, health
-from jms.poll import setup_poll_jms_event
+from api.jms.poll import setup_poll_jms_event
 
 logger = get_logger(__name__)
 
@@ -26,6 +26,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(I18nMiddleware)
 
 
 @app.get("/kael/connect")
@@ -35,7 +36,6 @@ async def connect(token: str):
 
 
 app.mount("/kael", StaticFiles(directory="ui", html=True), name="ui")
-app.add_middleware(RequestMiddleware)
 
 
 def startup_event():

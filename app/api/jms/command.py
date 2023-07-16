@@ -6,7 +6,8 @@ from datetime import datetime
 from pydantic import BaseModel
 from starlette.websockets import WebSocket
 
-from jms.base import BaseWisp
+from i18n import gettext as _
+from api.jms.base import BaseWisp
 from api.schemas import AskResponse, AskResponseType
 from wisp.protobuf import service_pb2
 from wisp.exceptions import WispError
@@ -88,7 +89,7 @@ class CommandHandler(BaseWisp):
             self.websocket, AskResponse(
                 type=AskResponseType.waiting,
                 conversation_id=self.session.id,
-                system_message=f'等待工单审批: {ticket_info.ticket_detail_url}'
+                system_message=_('Waiting for ticket approval: {}').format(ticket_info.ticket_detail_url)
             )
         )
         start_time = time.time()

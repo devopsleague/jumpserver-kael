@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 
 from api import globals
-from jms.base import BaseWisp
+from api.jms.base import BaseWisp
 from wisp.protobuf import service_pb2
 from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import Session
