@@ -9,8 +9,8 @@ from starlette.responses import Response
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from api.ai import ChatGPTManager
-from api.message import ChatGPTMessage, Conversation, MessageType
-from api.schemas import AskRequest, AskResponse, AskResponseType
+from api.message import ChatGPTMessage, MessageType
+from api.schemas import AskRequest, AskResponse, AskResponseType, Conversation, JMSState
 from api.jms import SessionHandler, JMSSession, TokenHandler, SessionManager
 from wisp.protobuf.common_pb2 import TokenAuthInfo
 from wisp.exceptions import WispError
@@ -29,6 +29,17 @@ async def interrupt_current_ask(conversation: Conversation):
     if jms_session:
         assert isinstance(jms_session, JMSSession)
         jms_session.current_ask_interrupt = True
+        return Response(status_code=status.HTTP_200_OK)
+    else:
+        return Response('Not found conversation id', status_code=status.HTTP_404_NOT_FOUND)
+
+
+@router.post("/jms_state/")
+async def jms_state(state: JMSState):
+    jms_session = SessionManager.get_jms_session(state.id)
+    if jms_session:
+        assert isinstance(jms_session, JMSSession)
+        jms_session.jms_state.activate_review = state.activate_review
         return Response(status_code=status.HTTP_200_OK)
     else:
         return Response('Not found conversation id', status_code=status.HTTP_404_NOT_FOUND)

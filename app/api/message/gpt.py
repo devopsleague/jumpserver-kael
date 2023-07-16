@@ -18,7 +18,3 @@ class ChatGPTMessage(BaseModel):
     create_time: Optional[datetime.datetime]
     type: MessageType = MessageType.message
     role: Literal['system', 'user', 'assistant'] = 'user'
-
-
-class Conversation(BaseModel):
-    id: str

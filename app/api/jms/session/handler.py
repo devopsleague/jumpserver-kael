@@ -1,18 +1,20 @@
 import asyncio
+from datetime import datetime
 from typing import Optional
+
 from starlette.websockets import WebSocket
 
-from datetime import datetime
 from api.jms.base import BaseWisp
-
-from api.schemas import AskResponse, AskResponseType
+from api.schemas import (
+    AskResponse, AskResponseType, CommandRecord, JMSState
+)
 from wisp.protobuf import service_pb2
 from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import TokenAuthInfo, Session
 from utils.logger import get_logger
 from utils.ws import reply
 from ..replay import ReplayHandler
-from ..command import CommandHandler, CommandRecord
+from ..command import CommandHandler
 
 logger = get_logger(__name__)
 
@@ -30,13 +32,17 @@ class JMSSession(BaseWisp):
         self.session_handler = None
         self.command_handler = None
         self.replay_handler = None
+        self.jms_state = JMSState(id=session.id)
 
     def active_session(self) -> None:
         from .manager import SessionManager
         SessionManager.register_jms_session(self)
         self.replay_handler = ReplayHandler(self.session)
         self.session_handler = SessionHandler(self.websocket)
-        self.command_handler = CommandHandler(self.websocket, self.session, self.command_acls)
+        self.command_handler = CommandHandler(
+            self.websocket, self.session,
+            self.command_acls, self.jms_state
+        )
 
     def close(self) -> None:
         from .manager import SessionManager
@@ -55,8 +61,8 @@ class JMSSession(BaseWisp):
 
     async def with_audit(self, command: str, chat_func):
         command_record = CommandRecord(input=command)
+        self.command_handler.command_record = command_record
         try:
-            self.command_handler.command_record = command_record
             is_continue = await self.command_handler.command_acl_filter()
             asyncio.create_task(self.replay_handler.write_input(command_record.input))
             if not is_continue:
@@ -84,22 +90,14 @@ class SessionHandler(BaseWisp):
 
     def create_new_session(self, auth_info: TokenAuthInfo) -> JMSSession:
         session = self.create_session(auth_info)
-
-        try:
-            # TODO 要不要看一下 secret 能不能连上
-            pass
-        except Exception as e:
-            self.close_session(session)
-            raise e
-
         return JMSSession(session, auth_info, self.websocket)
 
     def create_session(self, auth_info: TokenAuthInfo) -> Session:
         req_session = Session(
             user_id=auth_info.user.id,
-            user=f"{auth_info.user.name}({auth_info.user.username})",
+            user=f'{auth_info.user.name}({auth_info.user.username})',
             account_id=auth_info.account.id,
-            account=f"{auth_info.account.name}({auth_info.account.username})",
+            account=f'{auth_info.account.name}({auth_info.account.username})',
             org_id=auth_info.asset.org_id,
             asset_id=auth_info.asset.id,
             asset=auth_info.asset.name,
