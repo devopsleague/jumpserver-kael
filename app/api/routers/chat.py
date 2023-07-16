@@ -11,7 +11,7 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 from api.ai import ChatGPTManager
 from api.message import ChatGPTMessage, Conversation, MessageType
 from api.schemas import AskRequest, AskResponse, AskResponseType
-from jms import SessionHandler, JMSSession, TokenHandler, SessionManager
+from api.jms import SessionHandler, JMSSession, TokenHandler, SessionManager
 from wisp.protobuf.common_pb2 import TokenAuthInfo
 from wisp.exceptions import WispError
 

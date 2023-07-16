@@ -2,7 +2,7 @@ from wisp.protobuf import service_pb2
 from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import TokenAuthInfo
 
-from jms.base import BaseWisp
+from api.jms.base import BaseWisp
 from utils.logger import get_logger
 
 logger = get_logger(__name__)

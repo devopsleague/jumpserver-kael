@@ -4,11 +4,11 @@ import asyncio
 import threading
 
 from api import globals
-from jms.base import BaseWisp
+from api.jms.base import BaseWisp
 from wisp.protobuf import service_pb2
 from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import KillSession
-from jms.session import JMSSession
+from api.jms.session import JMSSession
 
 from utils.logger import get_logger
 
@@ -33,7 +33,7 @@ class PollJMSEvent(BaseWisp):
             logger.info('Scan remain replay success')
 
     def wait_for_kill_session_message(self):
-        from jms.session import SessionManager
+        from api.jms.session import SessionManager
         q = queue.Queue(maxsize=1000)
         for resp in self.stub.DispatchTask(iter(q.get, None)):
             task = resp.task

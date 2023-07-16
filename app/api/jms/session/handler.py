@@ -1,10 +1,9 @@
 import asyncio
 from typing import Optional
-from fastapi.encoders import jsonable_encoder
 from starlette.websockets import WebSocket
 
 from datetime import datetime
-from jms.base import BaseWisp
+from api.jms.base import BaseWisp
 
 from api.schemas import AskResponse, AskResponseType
 from wisp.protobuf import service_pb2

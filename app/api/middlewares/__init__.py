@@ -1,1 +1,1 @@
-from .request import *
+from .i18n import *
