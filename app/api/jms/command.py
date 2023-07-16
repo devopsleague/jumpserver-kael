@@ -3,12 +3,13 @@ import time
 import asyncio
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel
 from starlette.websockets import WebSocket
 
 from i18n import gettext as _
 from api.jms.base import BaseWisp
-from api.schemas import AskResponse, AskResponseType
+from api.schemas import (
+    AskResponse, AskResponseType, CommandRecord, JMSState
+)
 from wisp.protobuf import service_pb2
 from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import Session, CommandACL, RiskLevel
@@ -18,23 +19,21 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-class CommandRecord(BaseModel):
-    input: Optional[str] = None
-    output: Optional[str] = None
-    risk_level: str = RiskLevel.Normal
-
-
 class CommandHandler(BaseWisp):
     REJECT_MESSAGE = "reject by acl rule"
     WAIT_TICKET_TIMEOUT = 60 * 3
-    WAIT_TICKET_INTERVAL = 3
+    WAIT_TICKET_INTERVAL = 2
 
-    def __init__(self, websocket: WebSocket, session: Session, command_acls: List[CommandACL]):
+    def __init__(
+            self, websocket: WebSocket, session: Session,
+            command_acls: List[CommandACL], jms_state: JMSState
+    ):
         super().__init__()
         self.session = session
         self.websocket = websocket
         self.command_acls = command_acls
         self.command_record: Optional[CommandRecord] = None
+        self.jms_state = jms_state
 
     async def record_command(self):
         req = service_pb2.CommandRequest(
@@ -153,7 +152,29 @@ class CommandHandler(BaseWisp):
                     )
                 )
             elif acl.action == CommandACL.Review:
-                is_continue = await self.create_and_wait_ticket(acl)
+                is_continue = False
+                start_time = time.time()
+                end_time = start_time + 60
+                await reply(
+                    self.websocket, AskResponse(
+                        type=AskResponseType.waiting,
+                        conversation_id=self.session.id,
+                        system_message=_('Initiate ticket approval')
+                    )
+                )
+
+                while time.time() <= end_time:
+                    if self.jms_state.activate_review is None:
+                        await asyncio.sleep(1)
+                        continue
+                    if self.jms_state.activate_review:
+                        self.jms_state.activate_review = None
+                        is_continue = await self.create_and_wait_ticket(acl)
+                        break
+                    else:
+                        self.jms_state.activate_review = None
+                        is_continue = False
+                        break
             elif acl.action == CommandACL.Warning:
                 self.command_record.risk_level = RiskLevel.Warning
         return is_continue

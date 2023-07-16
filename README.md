@@ -43,6 +43,6 @@ $ python main.py
 ```agsl
 $ cd ui
 $ cp .env.development .env
-$ vim .env # 修改 VUE_APP_API_HOST
+$ vim .env # 修改 VITE_APP_BASE_URL
 $ npm run serve
 ```
