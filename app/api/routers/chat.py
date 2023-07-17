@@ -57,8 +57,8 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
     await websocket.accept()
     current_jms_sessions = []
     api_key = auth_info.account.secret
-    proxy = auth_info.asset.specific.http_proxy
     base_url = auth_info.asset.address
+    proxy = auth_info.asset.specific.http_proxy
     model = auth_info.platform.protocols[0].settings.get('api_mode')
     manager = ChatGPTManager(base_url=base_url, api_key=api_key, model=model, proxy=proxy)
 
@@ -110,7 +110,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
     except WebSocketDisconnect:
         logger.warning('Web socket disconnect')
         for jms_session in current_jms_sessions:
-            jms_session.close()
+            await jms_session.close()
 
 
 def chat_func(ask_request: AskRequest, manager: ChatGPTManager):

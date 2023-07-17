@@ -8,7 +8,7 @@ from starlette.websockets import WebSocket
 from i18n import gettext as _
 from api.jms.base import BaseWisp
 from api.schemas import (
-    AskResponse, AskResponseType, CommandRecord, JMSState
+    AskResponse, ResponseMeta, AskResponseType, CommandRecord, JMSState
 )
 from wisp.protobuf import service_pb2
 from wisp.exceptions import WispError
@@ -159,7 +159,8 @@ class CommandHandler(BaseWisp):
                     self.websocket, AskResponse(
                         type=AskResponseType.waiting,
                         conversation_id=self.session.id,
-                        system_message=_('Initiate ticket approval')
+                        system_message=_('Initiate ticket approval'),
+                        meta=ResponseMeta(activate_review=True)
                     )
                 )
 

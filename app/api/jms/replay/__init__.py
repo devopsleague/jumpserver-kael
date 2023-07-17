@@ -69,7 +69,7 @@ class ReplayHandler(BaseWisp):
         output_str = f"\r\n {output_str} \r\n"
         self.write_row(output_str)
 
-    def upload(self):
+    async def upload(self):
         try:
             self.file_writer.close()
             replay_request = service_pb2.ReplayRequest(

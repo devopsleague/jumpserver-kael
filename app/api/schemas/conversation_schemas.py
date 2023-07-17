@@ -23,8 +23,13 @@ class AskResponseType(StrEnum):
     finish = auto()
 
 
+class ResponseMeta(BaseModel):
+    activate_review: bool = False
+
+
 class AskResponse(BaseModel):
     type: AskResponseType
     conversation_id: Optional[str] = None
     message: Optional[ChatGPTMessage] = None
     system_message: str = None
+    meta: ResponseMeta = ResponseMeta()
