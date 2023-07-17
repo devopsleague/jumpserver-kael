@@ -108,6 +108,7 @@ onUnmounted(() => {
             <Message
             v-for="(item, index) of currentSessionStore.chats"
             :key="index"
+            :index="index"
             :item="item"
             :message="item.message"
             @delete="handleDelete(index)"

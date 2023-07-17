@@ -20,7 +20,6 @@ export function useChat() {
   } 
 
   const addChatConversationById = (chat) => {
-    chatStore.filterCurrentChat()
     chatStore.addChatsById(chat)
     pageScroll('scrollRef')
   }

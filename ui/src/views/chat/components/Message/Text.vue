@@ -20,9 +20,6 @@ const { error } = toRefs(props)
 const NMessage = useMessage()
 const textRef = ref()
 const role = props.message?.role !== 'assistant'
-const loading = computed(() => {
-  return chatStore.loading
-})
 
 const mdi = new MarkdownIt({
   html: false,

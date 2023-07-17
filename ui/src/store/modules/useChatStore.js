@@ -5,9 +5,14 @@ export const useChatStore = defineStore('chat-store', {
     loading: false,
     tabNum: 0,
     activeTab: 0,
-    sessionsStore: [],
-    filterChat: {}
+    sessionsStore: []
   }),
+  getters: {
+    filterChat(state) {
+      const currentChat = state.sessionsStore.filter((chat) => chat.id === state.activeTab)?.[0] || {}
+      return currentChat
+    }
+  },
   actions: {
     setLoading(loading) {
       this.loading = loading
@@ -17,11 +22,14 @@ export const useChatStore = defineStore('chat-store', {
       this.tabNum++
     },
 
+    setFilterChatDisabled(disabled) {
+      this.filterChat.disabled = disabled
+    },
+
     setActiveNum(id) {
       if (id === this.activeTab) return
 
       this.activeTab = id
-      this.filterCurrentChat()
     },
 
     addSessionsStore(data) {
@@ -39,11 +47,6 @@ export const useChatStore = defineStore('chat-store', {
         this.activeTab = sessionsStore?.[0]?.id
       }
     },
-  
-    // 过滤当前的聊天
-    filterCurrentChat () {
-      this.filterChat = this.sessionsStore.filter((chat) => chat.id === this.activeTab)?.[0] || {}
-    },
 
     addChatsById(chat) {
       this.filterChat.chats?.push(chat)
@@ -53,6 +56,12 @@ export const useChatStore = defineStore('chat-store', {
       const chats = this.filterChat.chats || []
       const filterChat = chats.filter((chat) => chat.message.id === id)?.[0] || {}
       filterChat.message.content = content
+    },
+
+    updateChatConversationDisabledById(index, disabled) {
+      const chats = this.filterChat.chats || []
+      const chat = chats[index]
+      chat.disabled = disabled
     }
   }
 })
