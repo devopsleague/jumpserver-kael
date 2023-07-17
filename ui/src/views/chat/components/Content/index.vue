@@ -8,11 +8,11 @@ import { createWebSocket, onSend, closeWs } from '@/utils/socket'
 import { useChatStore } from '@/store'
 import { pageScroll } from '@/utils/common'
 
-const { hasChat, setLoading, addChatConversationById, updateChatConversationContentById } = useChat()
+const { hasChat, setLoading, addChatConversationById, addTemporaryLoadingChat, updateChatConversationContentById } = useChat()
 const chatStore = useChatStore()
 const $axios = inject("$axios")
 const currentConversationId = ref('')
-
+const env = import.meta.env
 
 const loading = computed(() => {
   return chatStore.loading
@@ -41,6 +41,7 @@ const onWebSocketMessage = (data) => {
   if (data.type === 'message') {
     currentConversationId.value = data.conversation_id
     if (hasChat(data.message.id)) {
+      chatStore.removeLastChat()
       addChatConversationById(data)
     } else {
       updateChatConversationContentById(data.message.id, data.message.content)
@@ -60,6 +61,7 @@ const onSendHandle = (value) => {
     }
   }
   addChatConversationById(chat)
+  addTemporaryLoadingChat()
   const message = {
     content: value,
     conversation_id: currentConversationId.value || null
@@ -70,7 +72,9 @@ const onSendHandle = (value) => {
 const initWebSocket = () => {
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
   const path = `${protocol}://${window.location.host}/kael/chat/`
-  createWebSocket(path, onWebSocketMessage)
+  const localPath = env.VITE_APP_BASE_SOCKET + '/kael/chat/'
+  const url = env.MODE === 'development' ? localPath : path
+  createWebSocket(url, onWebSocketMessage)
 }
 
 const onStopHandle = () => {

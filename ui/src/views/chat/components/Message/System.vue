@@ -39,9 +39,9 @@ const onClick = (value) => {
   }
 
 onMounted(() => {
-  const currentChat = { ...currentChat.value }
-  if (currentChat.hasOwnProperty('disabled')) {
-    isDisabled.value = currentChat.value.disabled
+  const currentChatValue = { ...currentChat.value }
+  if (currentChatValue.hasOwnProperty('disabled')) {
+    isDisabled.value = currentChatValue.disabled
   } else {
     isDisabled.value = false
   }
