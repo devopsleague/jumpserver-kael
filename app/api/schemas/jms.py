@@ -13,6 +13,7 @@ class CommandRecord(BaseModel):
 class JMSState(BaseModel):
     id: str
     activate_review: Optional[bool] = None
+    new_dialogue: Optional[bool] = None
 
 
 class Conversation(BaseModel):
