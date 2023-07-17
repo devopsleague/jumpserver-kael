@@ -18,6 +18,9 @@ class I18nMiddleware:
         return {key: morsel.value for key, morsel in cookie.items()}
 
     async def __call__(self, scope, receive, send):
-        cookie = self.parse_cookie(scope)
-        globals.language = cookie.get('django_language', 'zh-hans')
+        try:
+            cookie = self.parse_cookie(scope)
+            globals.language = cookie.get('django_language', 'zh-hans')
+        except Exception:
+            pass
         await self.app(scope, receive, send)

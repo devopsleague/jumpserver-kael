@@ -38,25 +38,17 @@ async def connect(token: str):
 app.mount("/kael", StaticFiles(directory="ui", html=True), name="ui")
 
 
-def startup_event():
+@app.on_event("startup")
+async def on_startup():
     setup_logger()
     logger.info("应用程序启动，执行初始化操作")
     setup_poll_jms_event()
 
 
-def shutdown_event():
-    logger.info("应用程序关闭，执行清理操作")
-    shutdown_protobuf()
-
-
-@app.on_event("startup")
-async def on_startup():
-    startup_event()
-
-
 @app.on_event("shutdown")
 async def on_shutdown():
-    shutdown_event()
+    logger.info("应用程序关闭，执行清理操作")
+    shutdown_protobuf()
 
 
 if __name__ == "__main__":
