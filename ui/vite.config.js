@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
       cors: true,
       open: true,
       proxy: {
-        '/kael/': {
+        '/kael/interrupt_current_ask': {
           target: env.VITE_APP_BASE_URL,
           changeOrigin: true
         }
