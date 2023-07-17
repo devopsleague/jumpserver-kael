@@ -106,7 +106,7 @@ onUnmounted(() => {
 <template>
   <div :class="wrapClass">
     <div ref="textRef" class="leading-relaxed break-words">
-      <span v-if="text.length < 10 && !role" class="loading-box">
+      <span v-if="props.message?.content === 'loading' && !role" class="loading-box">
         <span></span>
         <span></span>
         <span></span>

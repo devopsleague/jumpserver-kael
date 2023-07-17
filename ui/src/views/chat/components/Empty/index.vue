@@ -4,7 +4,7 @@ import { useChat } from '../../hooks/useChat.js'
 import Footer from '../Footer/index.vue'
 import { onSend } from '@/utils/socket'
 
-const { onNewChat, addChatConversationById } = useChat()
+const { onNewChat, addChatConversationById, addTemporaryLoadingChat } = useChat()
 
 const lists = reactive([
   {
@@ -46,6 +46,7 @@ const onSendHandle = (value) => {
   }
   onNewChat(value)
   addChatConversationById(chat)
+  addTemporaryLoadingChat()
   const message = {
     content: value,
     conversation_id: null

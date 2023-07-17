@@ -24,8 +24,18 @@ export function useChat() {
     pageScroll('scrollRef')
   }
 
+  const addTemporaryLoadingChat = () => {
+    const temporaryChat = {
+      message: {
+        content: 'loading',
+        role: 'assistant',
+        create_time: new Date()
+      }
+    }
+    addChatConversationById(temporaryChat)
+  }
+
   const onNewChatOrAddChatConversationById = (chat) => {
-    debugger
     onNewChat(chat.message.content)
     addChatConversationById(chat)
     console.log(chatStore.sessionsStore)
@@ -52,6 +62,7 @@ export function useChat() {
     hasChat,
     setLoading,
     addChatConversationById,
+    addTemporaryLoadingChat,
     updateChatConversationContentById
   }
 }

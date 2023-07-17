@@ -52,6 +52,13 @@ export const useChatStore = defineStore('chat-store', {
       this.filterChat.chats?.push(chat)
     },
 
+    removeLastChat() {
+      const lastChat = this.filterChat.chats[this.filterChat.chats.length - 1]
+      if (lastChat?.message?.content === 'loading') {
+        this.filterChat.chats.pop()
+      }
+    },
+
     updateChatConversationContentById(id, content) {
       const chats = this.filterChat.chats || []
       const filterChat = chats.filter((chat) => chat.message.id === id)?.[0] || {}
