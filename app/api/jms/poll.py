@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 class PollJMSEvent(BaseWisp):
     @staticmethod
-    async def close_session(target_session):
+    async def close_session(target_session: JMSSession):
         await target_session.close()
 
     def clear_zombie_session(self):
