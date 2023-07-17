@@ -1,6 +1,7 @@
 <script setup>
 import { ref, toRefs, computed } from 'vue'
 import Text from './Text.vue'
+import System from './System.vue'
 import { useMessage, useDialog } from 'naive-ui'
 import { copy } from '@/utils/common'
 import robot from '@/assets/pwa-192x192.png'
@@ -8,6 +9,7 @@ import dayjs from 'dayjs'
 
 const props = defineProps({
   item: Object,
+  index: Number,
 })
 
 const { item = {} } = toRefs(props)
@@ -82,7 +84,12 @@ const options = computed(() => {
           </div>
         </p>
         <div class="message flex">
-          <Text :message="item.message" :as-raw-text="asRawText" :error="item?.error" />
+          <template v-if="item.type && item.type === 'waiting' && item.meta?.activate_review">
+            <System :item="item" :index="index" />
+          </template>
+          <template v-else>
+            <Text :message="item.message" :as-raw-text="asRawText" :error="item?.error" />
+          </template>
         </div>
       </div>
     </div>
