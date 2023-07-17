@@ -75,7 +75,7 @@ const initWebSocket = () => {
 
 const onStopHandle = () => {
   $axios.post(
-    '/interrupt_current_ask/',
+    '/kael/interrupt_current_ask/',
     { id: currentConversationId.value || '' }
   ).finally(() => {
     setLoading(false)
