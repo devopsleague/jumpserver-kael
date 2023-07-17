@@ -83,7 +83,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
             try:
                 if ask_request.conversation_id is None:
                     jms_session = session_handler.create_new_session(auth_info)
-                    jms_session.active_session()
+                    await jms_session.active_session()
                     current_jms_sessions.append(jms_session)
                 else:
                     conversation_id = ask_request.conversation_id
@@ -97,6 +97,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
                             )
                         )
                         continue
+                    jms_session.jms_state.new_dialogue = True
 
                 asyncio.create_task(
                     jms_session.with_audit(

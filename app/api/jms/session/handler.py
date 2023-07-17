@@ -1,3 +1,4 @@
+import time
 import asyncio
 from datetime import datetime
 from typing import Optional
@@ -34,7 +35,7 @@ class JMSSession(BaseWisp):
         self.replay_handler = None
         self.jms_state = JMSState(id=session.id)
 
-    def active_session(self) -> None:
+    async def active_session(self) -> None:
         from .manager import SessionManager
         SessionManager.register_jms_session(self)
         self.replay_handler = ReplayHandler(self.session)
@@ -43,6 +44,24 @@ class JMSSession(BaseWisp):
             self.websocket, self.session,
             self.command_acls, self.jms_state
         )
+        asyncio.create_task(self.maximum_idle_time_detection())
+
+    async def maximum_idle_time_detection(self):
+        last_active_time = datetime.now()
+
+        while True:
+            current_time = datetime.now()
+            idle_time = current_time - last_active_time
+
+            if idle_time.total_seconds() >= self.max_idle_time_delta * 60:
+                await self.close()
+                break
+
+            if self.jms_state.new_dialogue:
+                last_active_time = current_time
+                self.jms_state.new_dialogue = False
+
+            await asyncio.sleep(3)
 
     async def close(self) -> None:
         from .manager import SessionManager
