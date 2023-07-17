@@ -44,12 +44,14 @@ class JMSSession(BaseWisp):
             self.command_acls, self.jms_state
         )
 
-    def close(self) -> None:
+    async def close(self) -> None:
         from .manager import SessionManager
         self.current_ask_interrupt = True
-        self.replay_handler.upload()
-        self.session_handler.close_session(self.session)
+        await asyncio.sleep(1)
+        await self.replay_handler.upload()
+        await self.session_handler.close_session(self.session)
         SessionManager.unregister_jms_session(self)
+        await self.notify_to_close()
 
     async def notify_to_close(self):
         response = AskResponse(
@@ -87,6 +89,14 @@ class SessionHandler(BaseWisp):
     def __init__(self, websocket: Optional[WebSocket] = None):
         super().__init__()
         self.websocket = websocket
+        self.remote_address = self.get_remote_address()
+
+    def get_remote_address(self) -> str:
+        websocket = self.websocket
+        remote_address = websocket.client.host
+        if "x-forwarded-for" in websocket.headers:
+            remote_address = websocket.headers["x-forwarded-for"]
+        return remote_address
 
     def create_new_session(self, auth_info: TokenAuthInfo) -> JMSSession:
         session = self.create_session(auth_info)
@@ -103,7 +113,8 @@ class SessionHandler(BaseWisp):
             asset=auth_info.asset.name,
             login_from=Session.LoginFrom.WT,
             protocol=auth_info.asset.protocols[0].name,
-            date_start=int(datetime.now().timestamp())
+            date_start=int(datetime.now().timestamp()),
+            remote_addr=self.remote_address,
         )
         req = service_pb2.SessionCreateRequest(data=req_session)
         resp = self.stub.CreateSession(req)
@@ -113,7 +124,7 @@ class SessionHandler(BaseWisp):
             raise WispError(error_message)
         return resp.data
 
-    def close_session(self, session: Session) -> None:
+    async def close_session(self, session: Session) -> None:
         req = service_pb2.SessionFinishRequest(
             id=session.id,
             date_end=int(datetime.now().timestamp())
