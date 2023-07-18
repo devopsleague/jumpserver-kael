@@ -53,9 +53,12 @@ export const useChatStore = defineStore('chat-store', {
     },
 
     removeLastChat() {
-      const lastChat = this.filterChat.chats[this.filterChat.chats.length - 1]
-      if (lastChat?.message?.content === 'loading') {
-        this.filterChat.chats.pop()
+      const length = this.filterChat.chats?.length
+      if (length > 0) {
+        const lastChat = this.filterChat.chats[length - 1]
+        if (lastChat?.message?.content === 'loading') {
+          this.filterChat.chats.pop()
+        }
       }
     },
 

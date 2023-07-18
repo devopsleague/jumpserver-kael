@@ -108,7 +108,7 @@ onUnmounted(() => {
   <template v-if="!currentSessionStore.chats?.length">
     <Empty />
   </template>
-  <div v-else class="content">
+  <div v-else class="content" id="content">
     <main class="flex-1 overflow-y-auto dark:bg-[#343540]">
       <div id="scrollRef" class="overflow-hidden pt-4 pb-4">
         <div>
