@@ -35,8 +35,12 @@ const onWebSocketMessage = (data) => {
         create_time: new Date()
       }
     }
+    chatStore.removeLastChat()
     addChatConversationById(data)
     setLoading(false)
+    if (data.type === 'finish') {
+      chatStore.setFilterChatDisabled(true)
+    }
   }
   if (data.type === 'message') {
     currentConversationId.value = data.conversation_id
