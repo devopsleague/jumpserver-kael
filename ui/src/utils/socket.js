@@ -67,7 +67,7 @@ export function onMessage(res){
 // 连接失败
 export function onError(){
   console.log('连接失败')
-  reconnect()
+  // reconnect()
 }
  
 // 连接关闭
@@ -81,6 +81,7 @@ export function onClose(){
     },
     error: 'error'
   }
+  chatStore.removeLastChat()
   chatStore.addChatsById(chat)
   lunaEvent.sendEventToLuna(MESSAGES.CLOSE)
 }
