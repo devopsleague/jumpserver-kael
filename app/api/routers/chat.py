@@ -1,19 +1,20 @@
 import json
 import asyncio
-
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from starlette import status
 from starlette.responses import Response
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from i18n import gettext as _
 from api.ai import ChatGPTManager
 from api.message import ChatGPTMessage, MessageType
-from api.schemas import AskRequest, AskResponse, AskResponseType, Conversation, JMSState
 from api.jms import SessionHandler, JMSSession, TokenHandler, SessionManager
-from wisp.protobuf.common_pb2 import TokenAuthInfo
+from api.schemas import AskRequest, AskResponse, AskResponseType, Conversation, JMSState
 from wisp.exceptions import WispError
+from wisp.protobuf.common_pb2 import TokenAuthInfo
 
 from utils import reply
 from utils.ws import iter_text
@@ -31,7 +32,7 @@ async def interrupt_current_ask(conversation: Conversation):
         jms_session.current_ask_interrupt = True
         return Response(status_code=status.HTTP_200_OK)
     else:
-        return Response('Not found conversation id', status_code=status.HTTP_404_NOT_FOUND)
+        return Response('Not found conversation', status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.post("/jms_state/")
@@ -42,7 +43,7 @@ async def jms_state(state: JMSState):
         jms_session.jms_state.activate_review = state.activate_review
         return Response(status_code=status.HTTP_200_OK)
     else:
-        return Response('Not found conversation id', status_code=status.HTTP_404_NOT_FOUND)
+        return Response('Not found conversation', status_code=status.HTTP_404_NOT_FOUND)
 
 
 async def create_auth_info(token: Optional[str] = None) -> TokenAuthInfo:
@@ -80,7 +81,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
             try:
                 ask_request = AskRequest(**message)
             except ValidationError as e:
-                logger.warning(f"Invalid ask request: {e}")
+                logger.warning(f'Invalid ask request: {e}')
                 await reply(websocket, AskResponse(type=AskResponseType.error, system_message=str(e)))
                 continue
             try:
@@ -96,7 +97,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
                             websocket,
                             AskResponse(
                                 type=AskResponseType.error,
-                                system_message='Not found session id'
+                                system_message=_('Session does not exist')
                             )
                         )
                         continue
@@ -112,7 +113,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
                 logger.error(e)
 
     except WebSocketDisconnect:
-        logger.warning('Web socket disconnect')
+        logger.warning('Websocket disconnect')
         for jms_session in current_jms_sessions:
             await jms_session.close()
 
@@ -148,7 +149,7 @@ def chat_func(ask_request: AskRequest, manager: ChatGPTManager):
                 if interrupt:
                     break
         except Exception as e:
-            logger.error(f"chat error: {e}")
+            logger.error(f'Chat error: {e}')
             await reply(
                 websocket, AskResponse(
                     type=AskResponseType.error,

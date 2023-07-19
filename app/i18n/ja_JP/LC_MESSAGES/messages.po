@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-07-19 17:27+0800\n"
+"POT-Creation-Date: 2023-07-19 21:40+0800\n"
 "PO-Revision-Date: 2023-07-15 21:04+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja_JP\n"
@@ -18,13 +18,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.12.1\n"
 
-#: api/jms/command.py:91
+#: api/jms/command.py:96
 msgid "Review request has been initiated, please wait for review: {}"
 msgstr "レビュー要求が開始されました。レビューをお待ちください: {}"
 
-#: api/jms/command.py:164
+#: api/jms/command.py:124
+msgid "The ticket is rejected"
+msgstr "製造オーダが拒否されました"
+
+#: api/jms/command.py:128
+msgid "The ticket is closed"
+msgstr "製造オーダがクローズされました"
+
+#: api/jms/command.py:158
+msgid "The conversation has been rejected"
+msgstr "会話が拒否されました"
+
+#: api/jms/command.py:169
 msgid ""
 "You need to review the command before it can be executed. Do you want to "
 "initiate a review request?"
 msgstr "コマンドを入力するにはレビューが必要ですが、レビュー要求を開始しますか？"
+
+#: api/jms/session/handler.py:80
+msgid "Session interrupted"
+msgstr "セッションが中断されました"
+
+#: api/routers/chat.py:100
+msgid "Session does not exist"
+msgstr "セッションが存在しません"
 

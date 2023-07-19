@@ -20,7 +20,6 @@ logger = get_logger(__name__)
 
 
 class CommandHandler(BaseWisp):
-    REJECT_MESSAGE = "reject by acl rule"
     WAIT_TICKET_TIMEOUT = 60 * 3
     WAIT_TICKET_INTERVAL = 2
 
@@ -122,11 +121,11 @@ class CommandHandler(BaseWisp):
             elif state == service_pb2.TicketState.Rejected:
                 self.command_record.risk_level = RiskLevel.ReviewReject
                 ticket_closed = True
-                system_message = 'The ticket is rejected'
+                system_message = _('The ticket is rejected')
             elif state == service_pb2.TicketState.Closed:
                 self.command_record.risk_level = RiskLevel.ReviewCancel
                 ticket_closed = False
-                system_message = 'The ticket is closed'
+                system_message = _('The ticket is closed')
 
             if state in [service_pb2.TicketState.Rejected, service_pb2.TicketState.Closed]:
                 await reply(
@@ -156,7 +155,7 @@ class CommandHandler(BaseWisp):
                     self.websocket, AskResponse(
                         type=AskResponseType.reject,
                         conversation_id=self.session.id,
-                        system_message=self.REJECT_MESSAGE
+                        system_message=_('The conversation has been rejected')
                     )
                 )
             elif acl.action == CommandACL.Review:
