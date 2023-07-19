@@ -1,18 +1,21 @@
 import json
 import time
+import textwrap
 from datetime import datetime
 
 
 class AsciinemaWriter:
     VERSION = 2
+    WIDTH = 80
+    HEIGHT = 40
     DEFAULT_SHELL = "/bin/bash"
     DEFAULT_TERM = "xterm"
     NEW_LINE = "\n"
 
     def __init__(self, writer):
         self.config = {
-            "width": 80,
-            "height": 40,
+            "width": self.WIDTH,
+            "height": self.HEIGHT,
             "envShell": self.DEFAULT_SHELL,
             "envTerm": self.DEFAULT_TERM,
             "timestamp": int(datetime.timestamp(datetime.now())),
@@ -42,6 +45,8 @@ class AsciinemaWriter:
         self.write_stdout(ts, p)
 
     def write_stdout(self, ts, data):
-        row = [ts, "o", data.decode("utf-8")]
+        data = data.decode("utf-8")
+        wrapper = textwrap.TextWrapper(width=self.WIDTH)
+        row = [ts, "o", wrapper.fill(data)]
         json_data = json.dumps(row) + self.NEW_LINE
         self.writer.write(json_data)

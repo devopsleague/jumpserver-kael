@@ -2,7 +2,7 @@ import json
 import asyncio
 
 from typing import Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 from starlette import status
 from starlette.responses import Response
@@ -47,7 +47,10 @@ async def jms_state(state: JMSState):
 
 async def create_auth_info(token: Optional[str] = None) -> TokenAuthInfo:
     token_handler = TokenHandler()
-    auth_info = token_handler.get_token_auth_info(token)
+    try:
+        auth_info = token_handler.get_token_auth_info(token)
+    except WispError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     return auth_info
 
 
