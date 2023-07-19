@@ -88,7 +88,9 @@ class CommandHandler(BaseWisp):
             self.websocket, AskResponse(
                 type=AskResponseType.waiting,
                 conversation_id=self.session.id,
-                system_message=_('Waiting for ticket approval: {}').format(ticket_info.ticket_detail_url)
+                system_message=_(
+                    'Review request has been initiated, please wait for review: {}'
+                ).format(ticket_info.ticket_detail_url)
             )
         )
         start_time = time.time()
@@ -159,7 +161,10 @@ class CommandHandler(BaseWisp):
                     self.websocket, AskResponse(
                         type=AskResponseType.waiting,
                         conversation_id=self.session.id,
-                        system_message=_('Initiate ticket approval'),
+                        system_message=_(
+                            'You need to review the command before it can be executed. '
+                            'Do you want to initiate a review request?'
+                        ),
                         meta=ResponseMeta(activate_review=True)
                     )
                 )
