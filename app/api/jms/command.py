@@ -32,6 +32,8 @@ class CommandHandler(BaseWisp):
         self.session = session
         self.websocket = websocket
         self.command_acls = command_acls
+        self.cmd_acl_id = ''
+        self.cmd_group_id = ''
         self.command_record: Optional[CommandRecord] = None
         self.jms_state = jms_state
 
@@ -45,7 +47,9 @@ class CommandHandler(BaseWisp):
             timestamp=int(datetime.timestamp(datetime.now())),
             input=self.command_record.input,
             output=self.command_record.output,
-            risk_level=self.command_record.risk_level
+            risk_level=self.command_record.risk_level,
+            cmd_acl_id=self.cmd_acl_id,
+            cmd_group_id=self.cmd_group_id
         )
         resp = self.stub.UploadCommand(req)
         if not resp.status.ok:
@@ -62,6 +66,8 @@ class CommandHandler(BaseWisp):
                 try:
                     pattern = re.compile(command_group.pattern, flags)
                     if pattern.search(self.command_record.input.lower()) is not None:
+                        self.cmd_acl_id = command_acl.id
+                        self.cmd_group_id = command_group.id
                         return command_acl
                 except re.error as e:
                     error_message = f'Failed to re invalid pattern: {command_group.pattern} {e}'
