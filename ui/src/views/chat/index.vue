@@ -27,7 +27,7 @@ onMounted(() => {
 </template>
 
 <style>
-::v-deep .n-layout {
+::v-deep(.n-layout) {
   background-color: transparent;
 }
 </style>

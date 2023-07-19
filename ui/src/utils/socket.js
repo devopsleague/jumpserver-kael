@@ -13,8 +13,10 @@ let globalUri = null
 let chatStore = null
 let lunaEvent = null
 
-// uri: 长链接地址
-// callback: 服务端消息回调函数
+/**
+ * @param {String} uri 长链接地址
+ * @param {Function} callback 服务端消息回调函数
+ */
 export function createWebSocket(uri = globalUri, callback = globalCallback) {
   chatStore = useChatStore()
   lunaEvent = new LunaEvent()
@@ -24,7 +26,14 @@ export function createWebSocket(uri = globalUri, callback = globalCallback) {
   const params = getUrlParams()
   console.log('params', params)
   if (!Object.hasOwn(params, 'token')) {
-    window.$message.error('请传入 token 参数')
+    window.$dialog.error({
+      title: '错误',
+      content: '请传入 token 参数',
+      closable: false,
+      closeOnEsc: false,
+      maskClosable: false,
+      action: () => ''
+    })
     return
   }
   uri = uri + `?token=${params.token}`
@@ -84,6 +93,14 @@ export function onClose(){
   chatStore.removeLastChat()
   chatStore.addChatsById(chat)
   lunaEvent.sendEventToLuna(MESSAGES.CLOSE)
+  window.$dialog.warning({
+    title: '提示',
+    content: '连接已断开',
+    closable: false,
+    closeOnEsc: false,
+    maskClosable: false,
+    action: () => ''
+  })
 }
 
 // 断开关闭
@@ -130,7 +147,6 @@ export function reconnect() {
   // 没连接上会一直重连，设置延迟避免请求过多
   timeoutNum && clearTimeout(timeoutNum)
   timeoutNum = setTimeout(function () {
-    // 新连接
     createWebSocket()
     lockReconnect = false
   }, 10000)

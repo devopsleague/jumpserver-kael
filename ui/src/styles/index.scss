@@ -38,7 +38,7 @@ pre.code-block-wrapper {
   padding-top: 22px;
 }
 
-::v-deep .n-layout-content {
+::v-deep(.n-layout-content) {
   background-color: transparent;
 }
 
