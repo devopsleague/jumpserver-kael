@@ -5,11 +5,10 @@ import threading
 
 from api import globals
 from api.jms.base import BaseWisp
+from api.jms.session import JMSSession
 from wisp.protobuf import service_pb2
 from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import KillSession
-from api.jms.session import JMSSession
-
 from utils.logger import get_logger
 
 logger = get_logger(__name__)

@@ -1,10 +1,10 @@
-import time
 import asyncio
 from datetime import datetime
 from typing import Optional
 
 from starlette.websockets import WebSocket
 
+from i18n import gettext as _
 from api.jms.base import BaseWisp
 from api.schemas import (
     AskResponse, AskResponseType, CommandRecord, JMSState
@@ -73,12 +73,13 @@ class JMSSession(BaseWisp):
         await self.notify_to_close()
 
     async def notify_to_close(self):
-        response = AskResponse(
-            type=AskResponseType.finish,
-            conversation_id=self.session.id,
-            system_message='Session is interrupt'
+        await reply(
+            self.websocket, AskResponse(
+                type=AskResponseType.finish,
+                conversation_id=self.session.id,
+                system_message=_('Session interrupted')
+            )
         )
-        await reply(self.websocket, response)
 
     async def with_audit(self, command: str, chat_func):
         command_record = CommandRecord(input=command)
