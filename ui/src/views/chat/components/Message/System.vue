@@ -92,7 +92,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
 }
-::v-deep .n-card {
+::v-deep(.n-card) {
   width: 450px;
   background-color: #393a3c;
   .n-card-header {
