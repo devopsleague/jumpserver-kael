@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-07-16 14:44+0800\n"
+"POT-Creation-Date: 2023-07-19 17:27+0800\n"
 "PO-Revision-Date: 2023-07-15 21:04+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja_JP\n"
@@ -18,7 +18,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.12.1\n"
 
-#: api/jms/command.py:92
-msgid "Waiting for ticket approval: {}"
-msgstr "製造オーダ承認待ち: {}"
+#: api/jms/command.py:91
+msgid "Review request has been initiated, please wait for review: {}"
+msgstr "レビュー要求が開始されました。レビューをお待ちください: {}"
+
+#: api/jms/command.py:164
+msgid ""
+"You need to review the command before it can be executed. Do you want to "
+"initiate a review request?"
+msgstr "コマンドを入力するにはレビューが必要ですが、レビュー要求を開始しますか？"
 
