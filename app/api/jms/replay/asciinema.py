@@ -1,6 +1,5 @@
 import json
 import time
-import textwrap
 from datetime import datetime
 
 
@@ -45,8 +44,6 @@ class AsciinemaWriter:
         self.write_stdout(ts, p)
 
     def write_stdout(self, ts, data):
-        data = data.decode("utf-8")
-        wrapper = textwrap.TextWrapper(width=self.WIDTH)
-        row = [ts, "o", wrapper.fill(data)]
+        row = [ts, "o", data.decode("utf-8")]
         json_data = json.dumps(row) + self.NEW_LINE
         self.writer.write(json_data)
