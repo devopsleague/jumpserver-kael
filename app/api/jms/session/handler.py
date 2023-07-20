@@ -116,6 +116,7 @@ class SessionHandler(BaseWisp):
         remote_address = websocket.client.host
         if "x-forwarded-for" in websocket.headers:
             remote_address = websocket.headers["x-forwarded-for"]
+            remote_address = remote_address.split(',')[0].strip()
         return remote_address
 
     def create_new_session(self, auth_info: TokenAuthInfo) -> JMSSession:
