@@ -36,7 +36,7 @@ const onDelete = (id) => {
     <div class="box-border">
       <n-button
         secondary
-        class="mb-16px w-full border border-solid border-[#545557]"
+        class="mb-16px w-full border border-solid border-[#545557] h-44px rounded-6px"
         :disabled="loading"
         @click="onNewChat"
       >

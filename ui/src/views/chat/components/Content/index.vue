@@ -14,15 +14,11 @@ const $axios = inject("$axios")
 const currentConversationId = ref('')
 const env = import.meta.env
 
-const loading = computed(() => {
-  return chatStore.loading
-})
 const currentSessionStore = computed(() => {
   return chatStore.filterChat
 })
 
 const onWebSocketMessage = (data) => {
-  setLoading(true)
   currentConversationId.value = data?.conversation_id
   const types = ['waiting', 'reject', 'error', 'finish']
   if (types.includes(data.type)) {
@@ -100,7 +96,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  window.removeEventListener('beforeunload')
+  window?.removeEventListener('beforeunload')
 })
 </script>
 
