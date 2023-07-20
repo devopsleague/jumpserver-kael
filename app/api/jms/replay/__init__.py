@@ -1,4 +1,5 @@
 import os
+import textwrap
 from pathlib import Path
 from datetime import datetime
 
@@ -66,6 +67,8 @@ class ReplayHandler(BaseWisp):
         self.write_row(input_str)
 
     async def write_output(self, output_str):
+        wrapper = textwrap.TextWrapper(width=self.replay_writer.WIDTH)
+        output_str = wrapper.fill(output_str)
         output_str = f"\r\n {output_str} \r\n"
         self.write_row(output_str)
 
