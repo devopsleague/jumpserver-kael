@@ -25,7 +25,7 @@ const options = computed(() => {
     {
       label: '复制',
       key: 'copyText',
-      icons: 'fa fa-clipboard',
+      icons: 'copy',
       props: {
         onClick: () => {
           console.log('item: ', item)
@@ -73,7 +73,8 @@ const options = computed(() => {
           <div class="inline-block">
             <span v-if="options.length < 3">
               <span v-for="(item) in options" class="cursor-pointer hover:text-light-100">
-                <i :class="item.icons" class="ml-4px" @click="item.props.onClick"></i>
+                <i v-if="item.icons.startsWith('fa')" :class="item.icons" class="ml-4px" @click="item.props.onClick"></i>
+                <SvgIcon v-else :name="item.icons" class="ml-4px" @click="item.props.onClick" />
               </span>
             </span>
             <n-dropdown v-else trigger="hover" :options="options">

@@ -8,10 +8,13 @@ import lodash from 'lodash'
 import { setupStore } from './store'
 import '@/styles/index.scss'
 import axios from '@/utils/axios'
+import 'virtual:svg-icons-register'
+import SvgIcon from '@/components/SvgIcon/index.vue'
 
 window._ = lodash
 const app = createApp(App)
 app.provide('$axios', axios)
+app.component('SvgIcon', SvgIcon)
 
 setupStore(app)
 setupRouter(app)

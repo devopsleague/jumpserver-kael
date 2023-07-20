@@ -40,7 +40,8 @@ const onDelete = (id) => {
         :disabled="loading"
         @click="onNewChat"
       >
-        <i class="fa fa-plus mr-12px"></i>New chat
+        <SvgIcon name="add" class="mr-12px" />
+        New chat
       </n-button>
       <div 
         v-for="(item, index) in sessions"
@@ -50,11 +51,11 @@ const onDelete = (id) => {
         @click="switchTab(item.id)"
       >
         <span class="title">
-          <i class="fa fa-commenting-o mr-8px"></i>
+          <SvgIcon name="chat" class="mr-8px" />
           <span style="user-select: none;">{{ item.name }}</span>
         </span>
         <span v-if="activeTab === item.id" class="action">
-          <!-- <i class="fa fa-trash-o cursor-pointer" @click.stop="onDelete(item.id)"></i> -->
+          <!-- <SvgIcon name="delete" @click.stop="onDelete(item.id)" /> -->
         </span>
       </div>
     </div>
