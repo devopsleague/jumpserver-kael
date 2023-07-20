@@ -1,0 +1,5 @@
+# Editor directories and files
+.idea
+.DS_Store
+.config.yml
+.vscode
