@@ -54,7 +54,7 @@ const onDelete = (id) => {
           <span style="user-select: none;">{{ item.name }}</span>
         </span>
         <span v-if="activeTab === item.id" class="action">
-          <i class="fa fa-trash-o cursor-pointer" @click.stop="onDelete(item.id)"></i>
+          <!-- <i class="fa fa-trash-o cursor-pointer" @click.stop="onDelete(item.id)"></i> -->
         </span>
       </div>
     </div>
