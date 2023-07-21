@@ -2,7 +2,7 @@
 import { ref, toRefs, computed } from 'vue'
 import Text from './Text.vue'
 import System from './System.vue'
-import { useMessage, useDialog } from 'naive-ui'
+import { useMessage } from 'naive-ui'
 import { copy } from '@/utils/common'
 import robot from '@/assets/pwa-192x192.png'
 import dayjs from 'dayjs'
@@ -14,7 +14,6 @@ const props = defineProps({
 
 const { item = {} } = toRefs(props)
 const NMessage = useMessage()
-const NDialog = useDialog()
 const asRawText = ref(props.item.message.role === 'assistant')
 const userAvatar = computed(() => {
   return '/api/v1/settings/logo/'
@@ -33,25 +32,7 @@ const options = computed(() => {
           NMessage.success('复制成功')
         }
       }
-    },
-    // {
-    //   label: '删除',
-    //   key: 'delete',
-    //   icons: 'fa fa-trash-o',
-    //   props: {
-    //     onClick: () => {
-    //       NDialog.warning({
-    //         title: '删除',
-    //         content: '是否删除此消息？',
-    //         positiveText: '是',
-    //         negativeText: '否',
-    //         onPositiveClick: () => {
-    //           NMessage.success('确定')
-    //         }
-    //       })
-    //     }
-    //   }
-    // }
+    }
   ]
 
   return common
@@ -61,7 +42,7 @@ const options = computed(() => {
 <template>
   <div
     ref="messageRef" :class="{'dark:bg-[#444654]': asRawText}">
-    <div class="flex w-800px mx-auto pt-20px pb-20px">
+    <div class="flex w-800px mx-auto pt-18px pb-18px">
       <div class="avatar mr-6px ml-6px">
         <n-avatar round :src="asRawText ? robot : userAvatar" />
       </div>
@@ -104,6 +85,7 @@ const options = computed(() => {
   .n-avatar {
     width: 100%;
     height: 100%;
+    background-color: #444654;
   }
 }
 .message {
