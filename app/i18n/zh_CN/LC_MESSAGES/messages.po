@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-07-19 21:40+0800\n"
+"POT-Creation-Date: 2023-07-21 17:07+0800\n"
 "PO-Revision-Date: 2023-07-15 19:39+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: zh_Hans_CN\n"
@@ -19,8 +19,10 @@ msgstr ""
 "Generated-By: Babel 2.12.1\n"
 
 #: api/jms/command.py:96
-msgid "Review request has been initiated, please wait for review: {}"
-msgstr "复核请求已发起，请等待复核: {}"
+msgid ""
+"Review request has been initiated, please wait for review: [View "
+"Results]({})"
+msgstr "复核请求已发起，请等待复核: [查看结果]({})"
 
 #: api/jms/command.py:124
 msgid "The ticket is rejected"
@@ -44,7 +46,7 @@ msgstr "您输入命令需要复核后才可以执行，是否发起复核请求
 msgid "Session interrupted"
 msgstr "会话已中断"
 
-#: api/routers/chat.py:100
+#: api/routers/chat.py:77
 msgid "Session does not exist"
 msgstr "会话不存在"
 

@@ -1,6 +1,6 @@
+import os
 import logging
 import logging.config
-import os
 
 from api.conf import settings
 from api import globals as g
