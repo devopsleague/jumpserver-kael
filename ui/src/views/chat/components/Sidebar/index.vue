@@ -32,12 +32,12 @@ const onSwitchSidebar = () => {
 </script>
 <template>
   <n-layout-sider
+    bordered
     collapse-mode="width"
     :collapsed-width="0"
     :width="sidebarWidth"
     show-trigger="arrow-circle"
-    content-style="padding: 16px;"
-    bordered
+    content-style="padding: 16px;overflow-x:hidden;"
     class="bg-[#202123]"
   >
     <div class="box-border">
