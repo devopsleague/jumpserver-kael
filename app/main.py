@@ -1,15 +1,13 @@
 import uvicorn
-
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from utils.logger import setup_logger, LOGGING, get_logger
 from wisp import shutdown_protobuf
-
 from api.conf import settings
 from api.middlewares import I18nMiddleware
-from api.routers import chat, health
+from api.routers import chat, health, handlers
 from api.jms.poll import setup_poll_jms_event
 
 logger = get_logger(__name__)
@@ -18,6 +16,7 @@ app = FastAPI()
 
 app.include_router(chat.router, prefix="/kael")
 app.include_router(health.router, prefix="/kael")
+app.include_router(handlers.router, prefix="/kael")
 
 app.add_middleware(
     CORSMiddleware,

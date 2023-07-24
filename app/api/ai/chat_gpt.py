@@ -34,19 +34,27 @@ class ChatGPTManager:
         self.api_url = urljoin(base_url, 'chat/completions')
         self.model = model if model else 'gpt-3.5-turbo'
         self.session = make_session(proxy)
-        logger.info(f"api_url: {self.api_url} model: {model}, proxy: {proxy}")
+        logger.info(f'api_url: {self.api_url} model: {model}, proxy: {proxy}')
 
     async def ping(self):
         try:
             response = await self.session.get(
                 url=self.ping_url,
-                headers={"Authorization": f"Bearer {self.api_key}"},
+                headers={'Authorization': f'Bearer {self.api_key}'},
                 timeout=httpx.Timeout(2)
             )
-            return response.status_code == 200
-        except Exception:
-            await self.session.aclose()
-            return
+            if response.status_code == 200:
+                return True
+            else:
+                raise Exception(response.json()['error']['message'])
+
+        except httpx.TimeoutException:
+            error_message = 'Connection Timeout.'
+            raise Exception(error_message)
+
+        except Exception as e:
+            error_message = f'Connection Error: {e}'
+            raise Exception(error_message)
 
     async def ask(
             self, content: str, history_asks: list = None,
@@ -57,12 +65,12 @@ class ChatGPTManager:
         messages = history_asks[-10:]
 
         data = {
-            "model": self.model,
-            "messages": [
-                {"role": 'user', "content": msg}
+            'model': self.model,
+            'messages': [
+                {'role': 'user', 'content': msg}
                 for msg in messages
             ],
-            "stream": True,
+            'stream': True,
             **(extra_args or {})
         }
 
@@ -70,18 +78,18 @@ class ChatGPTManager:
         reply_message = None
         try:
             async with self.session.stream(
-                    method="POST",
+                    method='POST',
                     url=self.api_url,
                     json=data,
-                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    headers={'Authorization': f'Bearer {self.api_key}'},
                     timeout=httpx.Timeout(settings.chat_gpt.timeout)
             ) as response:
                 async for line in response.aiter_lines():
                     if not line or line is None:
                         continue
-                    if "data: " in line:
+                    if 'data: ' in line:
                         line = line[6:]
-                    if "[DONE]" in line:
+                    if '[DONE]' in line:
                         break
                     try:
                         line = json.loads(line)
@@ -109,8 +117,9 @@ class ChatGPTManager:
                 yield reply_message
 
         except httpx.TimeoutException:
-            error_message = 'Connect Chat GPT timeout'
+            error_message = 'Connection Timeout.'
             raise Exception(error_message)
-        except httpx.ConnectError:
-            error_message = f'Connect Chat GPT error'
+
+        except Exception as e:
+            error_message = f'Connection Error: {e}'
             raise Exception(error_message)

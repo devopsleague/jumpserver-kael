@@ -2,20 +2,18 @@ import json
 import asyncio
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import ValidationError
 from starlette import status
-from starlette.responses import Response
 from starlette.websockets import WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
+from fastapi import APIRouter, Depends, HTTPException
 
 from i18n import gettext as _
 from api.ai import ChatGPTManager
 from api.message import ChatGPTMessage, MessageType
-from api.jms import SessionHandler, JMSSession, TokenHandler, SessionManager
-from api.schemas import AskRequest, AskResponse, AskResponseType, Conversation, JMSState
+from api.schemas import AskRequest, AskResponse, AskResponseType
+from api.jms import SessionHandler, SessionManager, TokenHandler, JMSSession
 from wisp.exceptions import WispError
 from wisp.protobuf.common_pb2 import TokenAuthInfo
-
 from utils import reply
 from utils.ws import iter_text
 from utils.logger import get_logger
@@ -24,30 +22,9 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.post("/interrupt_current_ask/")
-async def interrupt_current_ask(conversation: Conversation):
-    jms_session = SessionManager.get_jms_session(conversation.id)
-    if jms_session:
-        assert isinstance(jms_session, JMSSession)
-        jms_session.current_ask_interrupt = True
-        return Response(status_code=status.HTTP_200_OK)
-    else:
-        return Response('Not found conversation', status_code=status.HTTP_404_NOT_FOUND)
-
-
-@router.post("/jms_state/")
-async def jms_state(state: JMSState):
-    jms_session = SessionManager.get_jms_session(state.id)
-    if jms_session:
-        assert isinstance(jms_session, JMSSession)
-        jms_session.jms_state.activate_review = state.activate_review
-        return Response(status_code=status.HTTP_200_OK)
-    else:
-        return Response('Not found conversation', status_code=status.HTTP_404_NOT_FOUND)
-
-
 async def create_auth_info(token: Optional[str] = None) -> TokenAuthInfo:
     token_handler = TokenHandler()
+    token = 'bb984bc5-bb78-4cae-85a5-eae3633638e9'
     try:
         auth_info = token_handler.get_token_auth_info(token)
     except WispError as e:
@@ -66,8 +43,11 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
     model = auth_info.platform.protocols[0].settings.get('api_mode')
     manager = ChatGPTManager(base_url=base_url, api_key=api_key, model=model, proxy=proxy)
 
-    if not await manager.ping():
-        await websocket.close(status.WS_1008_POLICY_VIOLATION)
+    try:
+        await manager.ping()
+    except Exception as e:
+        await manager.session.aclose()
+        await websocket.close(status.WS_1008_POLICY_VIOLATION, reason=str(e))
         return
 
     try:
@@ -75,7 +55,7 @@ async def chat(websocket: WebSocket, auth_info: TokenAuthInfo = Depends(create_a
             try:
                 message = json.loads(message)
             except json.JSONDecodeError:
-                await websocket.send_text("pong")
+                await websocket.send_text('pong')
                 continue
 
             try:
@@ -150,6 +130,7 @@ def chat_func(ask_request: AskRequest, manager: ChatGPTManager):
                     break
         except Exception as e:
             logger.error(f'Chat error: {e}')
+            await manager.session.aclose()
             await reply(
                 websocket, AskResponse(
                     type=AskResponseType.error,

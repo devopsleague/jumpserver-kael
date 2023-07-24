@@ -94,7 +94,7 @@ class CommandHandler(BaseWisp):
                 type=AskResponseType.waiting,
                 conversation_id=self.session.id,
                 system_message=_(
-                    'Review request has been initiated, please wait for review: {}'
+                    'Review request has been initiated, please wait for review: [View Results]({})'
                 ).format(ticket_info.ticket_detail_url)
             )
         )
