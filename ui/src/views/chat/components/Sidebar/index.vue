@@ -1,11 +1,13 @@
 <script setup>
 import { computed } from 'vue'
-import { useChatStore } from '@/store'
+import { useChatStore, useAppStore } from '@/store'
 
+const appStore = useAppStore()
 const chatStore = useChatStore()
 const activeTab = computed(() => chatStore.activeTab)
 const sessions = computed(() => chatStore.sessionsStore)
 const loading = computed(() => chatStore.loading)
+const sidebarWidth = computed(() => appStore.sidebarWidth)
 
 const switchTab = (id) => {
   if (loading.value) return
@@ -22,27 +24,42 @@ const onDelete = (id) => {
   chatStore.removeSessionsStore(id)
 }
 
+const onSwitchSidebar = () => {
+  appStore.switchSidebar()
+}
+
 </script>
 <template>
   <n-layout-sider
     collapse-mode="width"
     :collapsed-width="0"
-    :width="240"
+    :width="sidebarWidth"
     show-trigger="arrow-circle"
     content-style="padding: 16px;"
     bordered
     class="bg-[#202123]"
   >
     <div class="box-border">
-      <n-button
-        secondary
-        class="mb-16px w-full border border-solid border-[#545557] h-44px rounded-6px"
-        :disabled="loading"
-        @click="onNewChat"
-      >
-        <SvgIcon name="add" class="mr-44px" />
-        New chat
-      </n-button>
+      <div class="flex justify-between mb-16px">
+        <n-button
+          secondary
+          style="--n-color-hover: #2c2d32;"
+          class="border border-solid border-[#545557] h-44px rounded-6px flex-1 bg-transparent"
+          :disabled="loading"
+          @click="onNewChat"
+        >
+          <SvgIcon name="add" class="mr-28px" />
+          New chat
+        </n-button>
+        <button
+          secondary
+          class="border border-solid border-[#545557] h-44px rounded-6px ml-6px p-13px text-[0px] hover:bg-[#2c2d32]"
+          :disabled="loading"
+          @click="onSwitchSidebar"
+        >
+          <SvgIcon name="switch" />
+        </button>
+      </div>
       <div 
         v-for="(item, index) in sessions"
         :key="index"
@@ -78,7 +95,6 @@ const onDelete = (id) => {
     text-overflow: ellipsis;
   }
 }
-
 .not-allowed {
   cursor: not-allowed;
 }
@@ -87,5 +103,8 @@ const onDelete = (id) => {
 }
 ::v-deep(.n-button) {
   justify-content: left;
+}
+::v-deep(.n-layout-toggle-button) {
+  display: none;
 }
 </style>
