@@ -96,11 +96,9 @@ export function onClose(){
   window.$dialog.warning({
     title: '提示',
     content: '连接已断开',
-    closable: false,
-    closeOnEsc: false,
-    maskClosable: false,
     action: () => ''
   })
+  chatStore.setGlobalDisabled(true)
 }
 
 // 断开关闭

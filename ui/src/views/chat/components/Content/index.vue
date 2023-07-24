@@ -14,9 +14,7 @@ const $axios = inject("$axios")
 const currentConversationId = ref('')
 const env = import.meta.env
 
-const currentSessionStore = computed(() => {
-  return chatStore.filterChat
-})
+const currentSessionStore = computed(() => chatStore.filterChat)
 
 const onWebSocketMessage = (data) => {
   currentConversationId.value = data?.conversation_id

@@ -5,6 +5,7 @@ export const useChatStore = defineStore('chat-store', {
     loading: false,
     tabNum: 0,
     activeTab: 0,
+    globalDisabled: false,
     sessionsStore: []
   }),
   getters: {
@@ -24,6 +25,10 @@ export const useChatStore = defineStore('chat-store', {
 
     setFilterChatDisabled(disabled) {
       this.filterChat.disabled = disabled
+    },
+
+    setGlobalDisabled(disabled) {
+      this.globalDisabled = disabled
     },
 
     setActiveNum(id) {

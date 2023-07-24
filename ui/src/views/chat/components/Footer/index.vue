@@ -8,12 +8,9 @@ const { setLoading } = useChat()
 
 const value = ref('')
 const emit = defineEmits()
-const loading = computed(() => {
-  return chatStore.loading
-})
-const disabled = computed(() => {
-  return chatStore.filterChat.disabled || false
-})
+const loading = computed(() => chatStore.loading)
+const disabled = computed(() => chatStore.filterChat.disabled || false)
+const isGlobalDisabled = computed(() => chatStore.globalDisabled || false)
 
 const onSendHandle = () => {
   if (!value.value) return
@@ -46,14 +43,14 @@ const onKeyUpEnter = () => {
         placeholder="来说点什么吧..."
         class="dark:bg-[#40414f] hover:border-transparent"
         style="--n-border-hover: 1px solid transparent; --n-color-focus: transparent; --n-border-focus: 1px solid transparent; --n-box-shadow-focus: 0 0 8px 0 rgba(193, 194, 198, 0.3);"
-        :disabled="loading || disabled"
+        :disabled="loading || disabled || isGlobalDisabled"
         @keyup.enter="onKeyUpEnter"
       >
         <template #suffix>
           <n-button
             quaternary
             class="ml-10px"
-            :disabled="loading || disabled"
+            :disabled="loading || disabled || isGlobalDisabled"
             @click="onSendHandle"
           >
             <i class="fa fa-send"></i>
