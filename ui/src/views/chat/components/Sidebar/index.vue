@@ -8,6 +8,7 @@ const activeTab = computed(() => chatStore.activeTab)
 const sessions = computed(() => chatStore.sessionsStore)
 const loading = computed(() => chatStore.loading)
 const sidebarWidth = computed(() => appStore.sidebarWidth)
+const isGlobalDisabled = computed(() => chatStore.globalDisabled || false)
 
 const switchTab = (id) => {
   if (loading.value) return
@@ -45,7 +46,7 @@ const onSwitchSidebar = () => {
           secondary
           style="--n-color-hover: #2c2d32;"
           class="border border-solid border-[#545557] h-44px rounded-6px flex-1 bg-transparent"
-          :disabled="loading"
+          :disabled="loading || isGlobalDisabled"
           @click="onNewChat"
         >
           <SvgIcon name="add" class="mr-28px" />
@@ -54,7 +55,6 @@ const onSwitchSidebar = () => {
         <button
           secondary
           class="border border-solid border-[#545557] h-44px rounded-6px ml-6px p-13px text-[0px] hover:bg-[#2c2d32]"
-          :disabled="loading"
           @click="onSwitchSidebar"
         >
           <SvgIcon name="switch" />

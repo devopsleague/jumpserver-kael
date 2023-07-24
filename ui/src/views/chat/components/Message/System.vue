@@ -15,9 +15,7 @@ const props = defineProps({
 const { item, to, index } = toRefs(props)
 const isShow = ref(true)
 
-const currentChat = computed(() => {
-  return chatStore.filterChat.chats[index.value] || {}
-})
+const currentChat = computed(() => chatStore.filterChat.chats[index.value] || {})
 
 const onClick = (value) => {
   console.log('value: ', value)
