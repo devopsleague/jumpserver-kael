@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/jumpserver/kael/pkg/global"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -15,12 +14,13 @@ type Config struct {
 	LogDirPath string
 }
 
+var GlobalConfig *Config
+
 func Setup(configPath string) {
 	var conf = getDefaultConfig()
 	loadConfigFromEnv(&conf)
 	loadConfigFromFile(configPath, &conf)
-	global.Config = &conf
-	log.Printf("%+v\n", global.Config)
+	GlobalConfig = &conf
 }
 
 func getDefaultConfig() Config {

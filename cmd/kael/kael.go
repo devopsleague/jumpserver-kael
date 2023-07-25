@@ -2,13 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/jumpserver/kael/pkg/config"
-	"github.com/jumpserver/kael/pkg/global"
 	"github.com/jumpserver/kael/pkg/httpd"
 	"github.com/jumpserver/kael/pkg/logger"
-	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,23 +20,32 @@ var (
 
 func init() {
 	flag.StringVar(&configPath, "f", "config.yml", "config.yml path")
+
+}
+
+type Kael struct {
+	webSrv *httpd.Server
+}
+
+func (k *Kael) Start() {
+	go k.webSrv.Start()
+}
+
+func (k *Kael) Stop() {
+	k.webSrv.Stop()
 }
 func main() {
+	flag.Parse()
 	config.Setup(configPath)
 	logger.Setup()
 	gracefulStop := make(chan os.Signal, 1)
 	signal.Notify(gracefulStop, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-
-	eng := httpd.Routers()
-	conf := global.Config
-	addr := net.JoinHostPort(conf.Host, conf.Port)
-	srv := &http.Server{Addr: addr, Handler: eng}
-	err := srv.ListenAndServe()
-	if err != nil {
-		fmt.Println("gin error: ", err)
-		return
+	webSrv := httpd.NewServer()
+	app := &Kael{
+		webSrv: webSrv,
 	}
+	app.Start()
 	<-gracefulStop
-	//srv.Shutdown()
+	app.Stop()
 
 }

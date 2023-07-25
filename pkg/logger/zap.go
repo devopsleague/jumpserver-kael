@@ -2,7 +2,7 @@ package logger
 
 import (
 	"fmt"
-	"github.com/jumpserver/kael/pkg/global"
+	"github.com/jumpserver/kael/pkg/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"strings"
@@ -12,16 +12,9 @@ var Zap = new(_zap)
 
 type _zap struct{}
 
-func Setup() {
-	cores := Zap.GetZapCores()
-	logger := zap.New(zapcore.NewTee(cores...))
-	global.Logger = logger.WithOptions(zap.AddCaller())
-	zap.ReplaceGlobals(global.Logger)
-}
-
 func (z *_zap) GetZapCores() []zapcore.Core {
 	cores := make([]zapcore.Core, 0, 7)
-	for level := z.TransportLevel(global.Config.LogLevel); level <= zapcore.FatalLevel; level++ {
+	for level := z.TransportLevel(config.GlobalConfig.LogLevel); level <= zapcore.FatalLevel; level++ {
 		cores = append(cores, z.GetEncoderCore(level, z.GetLevelPriority(level)))
 	}
 	return cores
