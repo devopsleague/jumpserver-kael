@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"github.com/jumpserver/kael/pkg/config"
+	"github.com/jumpserver/kael/pkg/global"
 	"github.com/jumpserver/kael/pkg/httpd"
+	"github.com/jumpserver/kael/pkg/jms"
 	"github.com/jumpserver/kael/pkg/logger"
 	"os"
 	"os/signal"
@@ -24,15 +26,18 @@ func init() {
 }
 
 type Kael struct {
-	webSrv *httpd.Server
+	webSrv     *httpd.Server
+	grpcClient *jms.GrpcClient
 }
 
 func (k *Kael) Start() {
 	go k.webSrv.Start()
+	k.grpcClient.Start()
 }
 
 func (k *Kael) Stop() {
 	k.webSrv.Stop()
+	k.grpcClient.Stop()
 }
 func main() {
 	flag.Parse()
@@ -40,12 +45,12 @@ func main() {
 	logger.Setup()
 	gracefulStop := make(chan os.Signal, 1)
 	signal.Notify(gracefulStop, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	webSrv := httpd.NewServer()
 	app := &Kael{
-		webSrv: webSrv,
+		webSrv:     httpd.NewServer(),
+		grpcClient: jms.NewClient(),
 	}
+	global.GrpcClient = app.grpcClient
 	app.Start()
 	<-gracefulStop
 	app.Stop()
-
 }
