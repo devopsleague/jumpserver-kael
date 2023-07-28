@@ -2,21 +2,23 @@ package jms
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/jumpserver/kael/pkg/global"
+	"github.com/jumpserver/wisp/protobuf-go/protobuf"
 	"regexp"
 	"strings"
 	"time"
 )
 
 type CommandHandler struct {
-	Session       *Session
+	Session       *protobuf.Session
 	Websocket     *websocket.Conn
-	CommandACLs   []*CommandACL
+	CommandACLs   []*protobuf.CommandACL
 	CmdACLID      string
 	CmdGroupID    string
 	CommandRecord *CommandRecord
 	JMSState      *JMSState
-	Stub          *JMSStub
 }
 
 const (
@@ -24,21 +26,24 @@ const (
 	WAIT_TICKET_INTERVAL = 2
 )
 
-func NewCommandHandler(websocket *websocket.Conn, session *Session, commandACLs []*CommandACL, jmsState *JMSState) *CommandHandler {
+func NewCommandHandler(
+	websocket *websocket.Conn, session *protobuf.Session,
+	commandACLs []*protobuf.CommandACL, jmsState *JMSState,
+) *CommandHandler {
 	return &CommandHandler{
 		Session:       session,
 		Websocket:     websocket,
 		CommandACLs:   commandACLs,
 		CommandRecord: nil,
 		JMSState:      jmsState,
-		Stub:, // Initialize your JMSStub instance here,
 	}
 }
 
 func (ch *CommandHandler) RecordCommand() {
-	req := &CommandRequest{
-		Sid:        ch.Session.ID,
-		OrgID:      ch.Session.OrgID,
+	ctx := context.Background()
+	req := &protobuf.CommandRequest{
+		Sid:        ch.Session.Id,
+		OrgId:      ch.Session.OrgId,
 		Asset:      ch.Session.Asset,
 		Account:    ch.Session.Account,
 		User:       ch.Session.User,
@@ -46,18 +51,18 @@ func (ch *CommandHandler) RecordCommand() {
 		Input:      ch.CommandRecord.Input,
 		Output:     ch.CommandRecord.Output,
 		RiskLevel:  ch.CommandRecord.RiskLevel,
-		CmdACLID:   ch.CmdACLID,
-		CmdGroupID: ch.CmdGroupID,
+		CmdAclId:   ch.CmdACLID,
+		CmdGroupId: ch.CmdGroupID,
 	}
 
-	resp, err := ch.Stub.UploadCommand(context.Background(), req)
+	resp, err := global.GrpcClient.Client.UploadCommand(ctx, req)
 	if err != nil || !resp.Status.Ok {
 		errorMessage := "Failed to upload command"
-		// Handle the error
+		fmt.Println(errorMessage)
 	}
 }
 
-func (ch *CommandHandler) MatchRule() *CommandACL {
+func (ch *CommandHandler) MatchRule() *protobuf.CommandACL {
 	for _, commandACL := range ch.CommandACLs {
 		for _, commandGroup := range commandACL.CommandGroups {
 			flags := regexp.UNICODE
@@ -72,8 +77,8 @@ func (ch *CommandHandler) MatchRule() *CommandACL {
 			}
 
 			if pattern.MatchString(strings.ToLower(ch.CommandRecord.Input)) {
-				ch.CmdACLID = commandACL.ID
-				ch.CmdGroupID = commandGroup.ID
+				ch.CmdACLID = commandACL.Id
+				ch.CmdGroupID = commandGroup.Id
 				return commandACL
 			}
 		}
@@ -82,23 +87,24 @@ func (ch *CommandHandler) MatchRule() *CommandACL {
 	return nil
 }
 
-func (ch *CommandHandler) CreateAndWaitTicket(commandACL *CommandACL) bool {
-	req := &CommandConfirmRequest{
+func (ch *CommandHandler) CreateAndWaitTicket(commandACL *protobuf.CommandACL) bool {
+	ctx := context.Background()
+	req := &protobuf.CommandConfirmRequest{
 		Cmd:       ch.CommandRecord.Input,
-		SessionID: ch.Session.ID,
-		CmdACLID:  ch.CmdACLID,
+		SessionId: ch.Session.Id,
+		CmdAclId:  ch.CmdACLID,
 	}
 
-	resp, err := ch.Stub.CreateCommandTicket(context.Background(), req)
+	resp, err := global.GrpcClient.Client.CreateCommandTicket(ctx, req)
 	if err != nil || !resp.Status.Ok {
 		errorMessage := "Failed to create ticket"
-		// Handle the error
+		fmt.Println(errorMessage)
 	}
 
 	return ch.WaitForTicketStatusChange(resp.Info)
 }
 
-func (ch *CommandHandler) WaitForTicketStatusChange(ticketInfo *TicketInfo) bool {
+func (ch *CommandHandler) WaitForTicketStatusChange(ticketInfo *protobuf.TicketInfo) bool {
 	// Implement the function here as you did in the Python code.
 	// The logic for waiting and checking the ticket status can be similar.
 
@@ -110,30 +116,29 @@ func (ch *CommandHandler) CommandACLFilter() bool {
 	acl := ch.MatchRule()
 	if acl != nil {
 		switch acl.Action {
-		case CommandACLReject:
+		case protobuf.CommandACL_Reject:
 			isContinue = false
-			ch.CommandRecord.RiskLevel = RiskLevelReject
-			// Handle response as you did in the Python code
-		case CommandACLReview:
+			ch.CommandRecord.RiskLevel = protobuf.CommandACL_Reject
+		case protobuf.CommandACL_Review:
 			isContinue = false
 			startTime := time.Now()
 			endTime := startTime.Add(time.Duration(60) * time.Second)
-			// Handle response as you did in the Python code
-		case CommandACLWarning:
-			ch.CommandRecord.RiskLevel = RiskLevelWarning
+		case protobuf.CommandACL_Warning:
+			ch.CommandRecord.RiskLevel = protobuf.CommandACL_Warning
 		}
 	}
 	return isContinue
 }
 
-func (ch *CommandHandler) CloseTicket(ticketInfo *TicketInfo) {
-	req := &TicketRequest{
+func (ch *CommandHandler) CloseTicket(ticketInfo *protobuf.TicketInfo) {
+	ctx := context.Background()
+	req := &protobuf.TicketRequest{
 		Req: ticketInfo.CancelReq,
 	}
 
-	resp, err := ch.Stub.CancelTicket(context.Background(), req)
+	resp, err := global.GrpcClient.Client.CancelTicket(ctx, req)
 	if err != nil || !resp.Status.Ok {
 		errorMessage := "Failed to close ticket"
-		// Handle the error
+		fmt.Println(errorMessage)
 	}
 }

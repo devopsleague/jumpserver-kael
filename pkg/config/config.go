@@ -8,10 +8,12 @@ import (
 )
 
 type Config struct {
-	Host       string `mapstructure:"Host"`
-	Port       string `mapstructure:"Port"`
-	LogLevel   string `mapstructure:"LOG_LEVEL"`
-	LogDirPath string
+	Host             string `mapstructure:"Host"`
+	Port             string `mapstructure:"Port"`
+	LogLevel         string `mapstructure:"LOG_LEVEL"`
+	LogDirPath       string
+	DataFolderPath   string
+	ReplayFolderPath string
 }
 
 var GlobalConfig *Config
@@ -27,19 +29,21 @@ func getDefaultConfig() Config {
 	rootPath := getPwdDirPath()
 	dataFolderPath := filepath.Join(rootPath, "data")
 	replayFolderPath := filepath.Join(dataFolderPath, "replays")
-	LogDirPath := filepath.Join(dataFolderPath, "logs")
+	logDirPath := filepath.Join(dataFolderPath, "logs")
 
-	folders := []string{dataFolderPath, replayFolderPath, LogDirPath}
+	folders := []string{dataFolderPath, replayFolderPath, logDirPath}
 	for _, v := range folders {
 		if err := EnsureDirExist(v); err != nil {
 			log.Fatalf("Create folder failed: %s", err)
 		}
 	}
 	return Config{
-		Host:       "localhost",
-		Port:       "8083",
-		LogLevel:   "INFO",
-		LogDirPath: LogDirPath,
+		Host:             "localhost",
+		Port:             "8083",
+		LogLevel:         "INFO",
+		LogDirPath:       logDirPath,
+		DataFolderPath:   dataFolderPath,
+		ReplayFolderPath: replayFolderPath,
 	}
 
 }
