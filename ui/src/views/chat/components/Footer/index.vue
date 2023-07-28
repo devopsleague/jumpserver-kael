@@ -1,12 +1,13 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useChatStore } from '@/store'
 import { useChat } from '../../hooks/useChat.js'
 
 const chatStore = useChatStore()
-const { setLoading } = useChat()
+const { setLoading, getInputFocus } = useChat()
 
 const value = ref('')
+const isIM = ref(false)
 const emit = defineEmits()
 const loading = computed(() => chatStore.loading)
 const disabled = computed(() => chatStore.filterChat.disabled || false)
@@ -22,10 +23,23 @@ const onSendHandle = () => {
 
 const onStopHandle = () => {
   emit('stop')
+  nextTick(() => {
+    getInputFocus()
+  })
 }
 
-const onKeyUpEnter = () => {
-  onSendHandle()
+const onKeyEnter = (event) => {
+  if (!isIM.value) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      onSendHandle()
+    }
+  } else {
+    if (event.key === 'Enter' && event.ctrlKey) {
+      event.preventDefault()
+      onSendHandle()
+    }
+  }
 }
 </script>
 
@@ -39,12 +53,16 @@ const onKeyUpEnter = () => {
     <div class="flex w-800px mx-auto p-4">
       <n-input
         v-model:value="value"
-        type="text"
+        type="textarea"
+        autofocus
+        :autosize="{ minRows: 1, maxRows: 7 }"
         placeholder="来说点什么吧..."
         class="dark:bg-[#40414f] hover:border-transparent"
         style="--n-border-hover: 1px solid transparent; --n-color-focus: transparent; --n-border-focus: 1px solid transparent; --n-box-shadow-focus: 0 0 8px 0 rgba(193, 194, 198, 0.3);"
         :disabled="loading || disabled || isGlobalDisabled"
-        @keyup.enter="onKeyUpEnter"
+        @compositionstart="isIM = true"
+        @compositionend="isIM = false"
+        @keypress="onKeyEnter"
       >
         <template #suffix>
           <n-button
@@ -61,11 +79,18 @@ const onKeyUpEnter = () => {
   </footer>
 </template>
 
+<style>
+.n-input.n-input--textarea .n-input-wrapper {
+  resize: none !important;
+  padding-top: 11px !important;
+  padding-bottom: 10px !important;
+}
+</style>
+
 <style lang="scss" scoped>
 .footer {
   .n-input {
-    height: 58px;
-    line-height: 58px;
+    min-height: 58px;
     border-radius: 12px;
   }
 }
