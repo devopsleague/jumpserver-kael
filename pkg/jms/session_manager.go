@@ -30,6 +30,6 @@ func (sm *SessionManager) GetJMSSession(sessionID string) *JMSSession {
 	return nil
 }
 
-func (sm *SessionManager) GetStore() sync.Map {
-	return sm.store
+func (sm *SessionManager) GetStore() *sync.Map {
+	return &sm.store
 }

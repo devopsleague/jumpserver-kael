@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/jumpserver/kael/pkg/global"
+	"github.com/jumpserver/kael/pkg/schemas"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
 	"regexp"
 	"strings"
@@ -17,8 +18,8 @@ type CommandHandler struct {
 	CommandACLs   []*protobuf.CommandACL
 	CmdACLID      string
 	CmdGroupID    string
-	CommandRecord *CommandRecord
-	JMSState      *JMSState
+	CommandRecord *schemas.CommandRecord
+	JMSState      *schemas.JMSState
 }
 
 const (
@@ -28,7 +29,7 @@ const (
 
 func NewCommandHandler(
 	websocket *websocket.Conn, session *protobuf.Session,
-	commandACLs []*protobuf.CommandACL, jmsState *JMSState,
+	commandACLs []*protobuf.CommandACL, jmsState *schemas.JMSState,
 ) *CommandHandler {
 	return &CommandHandler{
 		Session:       session,
@@ -65,18 +66,18 @@ func (ch *CommandHandler) RecordCommand() {
 func (ch *CommandHandler) MatchRule() *protobuf.CommandACL {
 	for _, commandACL := range ch.CommandACLs {
 		for _, commandGroup := range commandACL.CommandGroups {
-			flags := regexp.UNICODE
+			flags := ""
 			if commandGroup.IgnoreCase {
-				flags |= regexp.IGNORECASE
+				flags = "(?i)"
 			}
-
-			pattern, err := regexp.Compile("(?" + flags + ")" + commandGroup.Pattern)
+			re, err := regexp.Compile(flags + commandGroup.Pattern)
 			if err != nil {
 				errorMessage := "Failed to compile regular expression"
-				// Handle the error
+				fmt.Println(errorMessage)
+				return nil
 			}
 
-			if pattern.MatchString(strings.ToLower(ch.CommandRecord.Input)) {
+			if re.MatchString(strings.ToLower(ch.CommandRecord.Input)) {
 				ch.CmdACLID = commandACL.Id
 				ch.CmdGroupID = commandGroup.Id
 				return commandACL
@@ -99,16 +100,50 @@ func (ch *CommandHandler) CreateAndWaitTicket(commandACL *protobuf.CommandACL) b
 	if err != nil || !resp.Status.Ok {
 		errorMessage := "Failed to create ticket"
 		fmt.Println(errorMessage)
+		return false
 	}
 
 	return ch.WaitForTicketStatusChange(resp.Info)
 }
 
 func (ch *CommandHandler) WaitForTicketStatusChange(ticketInfo *protobuf.TicketInfo) bool {
-	// Implement the function here as you did in the Python code.
-	// The logic for waiting and checking the ticket status can be similar.
+	ctx := context.Background()
+	startTime := time.Now()
+	endTime := startTime.Add(time.Duration(WAIT_TICKET_TIMEOUT) * time.Second)
+	ticketClosed := true
+	isContinue := false
+	for time.Now().Before(endTime) {
+		req := &protobuf.TicketRequest{Req: ticketInfo.CheckReq}
+		resp, err := global.GrpcClient.Client.CheckTicketState(ctx, req)
+		if err != nil || !resp.Status.Ok {
+			errorMessage := "Failed to check ticket status"
+			fmt.Println(errorMessage)
+			break
+		}
+		systemMessage := ""
+		switch resp.Data.State {
+		case protobuf.TicketState_Approved:
+			isContinue = true
+			ticketClosed = false
+			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewAccept
+			break
+		case protobuf.TicketState_Rejected:
+			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewReject
+			ticketClosed = false
+			systemMessage = "The ticket is rejected"
+		case protobuf.TicketState_Closed:
+			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewCancel
+			ticketClosed = false
+			systemMessage = "The ticket is closed"
+		default:
+			time.Sleep(WAIT_TICKET_INTERVAL)
+		}
+	}
 
-	return true
+	if ticketClosed {
+		ch.CloseTicket(ticketInfo)
+	}
+	return isContinue
 }
 
 func (ch *CommandHandler) CommandACLFilter() bool {
@@ -118,13 +153,28 @@ func (ch *CommandHandler) CommandACLFilter() bool {
 		switch acl.Action {
 		case protobuf.CommandACL_Reject:
 			isContinue = false
-			ch.CommandRecord.RiskLevel = protobuf.CommandACL_Reject
+			ch.CommandRecord.RiskLevel = protobuf.RiskLevel(protobuf.CommandACL_Reject)
+		case protobuf.CommandACL_Warning:
+			ch.CommandRecord.RiskLevel = protobuf.RiskLevel(protobuf.CommandACL_Warning)
 		case protobuf.CommandACL_Review:
 			isContinue = false
 			startTime := time.Now()
 			endTime := startTime.Add(time.Duration(60) * time.Second)
-		case protobuf.CommandACL_Warning:
-			ch.CommandRecord.RiskLevel = protobuf.CommandACL_Warning
+
+			for time.Now().Before(endTime) {
+				switch ch.JMSState.ActivateReview {
+				case 0:
+					time.Sleep(1 * time.Second)
+				case 1:
+					// 复核
+					isContinue = ch.CreateAndWaitTicket(acl)
+				case 2:
+					// 拒绝
+					//ch.JMSState.ActivateReview 还原
+					isContinue = false
+					break
+				}
+			}
 		}
 	}
 	return isContinue

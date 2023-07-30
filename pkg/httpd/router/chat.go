@@ -3,8 +3,10 @@ package router
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/jumpserver/kael/pkg/jms"
 	"github.com/jumpserver/kael/pkg/manager"
-	"github.com/sashabaranov/go-openai"
+	"github.com/jumpserver/kael/pkg/schemas"
+	"github.com/jumpserver/wisp/protobuf-go/protobuf"
 	"net/http"
 )
 
@@ -15,34 +17,39 @@ type _ChatApi struct{}
 func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
 	status := make(map[string]interface{})
 
-	answerCh := make(chan string)
-	doneCh := make(chan bool)
-	authToken := ""
-	baseURL := ""
-	proxy := ""
-	model := ""
-	content := "你好"
-	c := manager.NewClient(authToken, baseURL, proxy)
-	askChatGPT := &manager.AskChatGPT{
-		Client:         c,
-		Model:          model,
-		Content:        content,
-		HistoryContent: make([]openai.ChatCompletionMessage, 0),
-		AnswerCh:       answerCh,
-		DoneCh:         doneCh,
-	}
-	go manager.ChatGPT(askChatGPT)
+	ctx.JSON(http.StatusOK, status)
+}
 
-	fmt.Printf("回答内容：")
-	for {
-		select {
-		case answer := <-answerCh:
-			fmt.Printf(answer)
-		case <-doneCh:
-			fmt.Println("\n循环结束")
-			return
+func chatFunc(authInfo *protobuf.TokenAuthInfo, askRequest schemas.AskRequest) func(jmss *jms.JMSSession) string {
+	return func(jmss *jms.JMSSession) string {
+		doneCh := make(chan bool)
+		answerCh := make(chan string)
+		model := authInfo.Platform.Protocols[0].Settings["api_mode"]
+		jmss.HistoryAsks = append(jmss.HistoryAsks, askRequest.Content)
+		c := manager.NewClient(
+			authInfo.Account.Secret,
+			authInfo.Asset.Address,
+			authInfo.Asset.Specific.HttpProxy,
+		)
+		askChatGPT := &manager.AskChatGPT{
+			Client:   c,
+			Model:    model,
+			Contents: jmss.HistoryAsks,
+			AnswerCh: answerCh,
+			DoneCh:   doneCh,
+		}
+		go manager.ChatGPT(askChatGPT)
+		lastContent := ""
+		for {
+			select {
+			case answer := <-answerCh:
+				// websocket send
+				lastContent = answer
+				fmt.Printf(answer)
+			case <-doneCh:
+				close(answerCh)
+				return lastContent
+			}
 		}
 	}
-
-	ctx.JSON(http.StatusOK, status)
 }

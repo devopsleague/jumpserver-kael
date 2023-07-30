@@ -50,6 +50,7 @@ func main() {
 		grpcClient: jms.NewClient(),
 	}
 	global.GrpcClient = app.grpcClient
+	global.SessionManager = jms.NewSessionManager()
 	app.Start()
 	<-gracefulStop
 	app.Stop()

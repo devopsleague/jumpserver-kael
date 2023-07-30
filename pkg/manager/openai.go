@@ -14,7 +14,6 @@ import (
 func NewClient(authToken, baseURL, proxy string) *openai.Client {
 	config := openai.DefaultConfig(authToken)
 	config.BaseURL = baseURL
-	openai.NewClient(authToken)
 	if proxy != "" {
 		AddProxy(&config, proxy)
 	}
@@ -37,10 +36,13 @@ func AddProxy(config *openai.ClientConfig, proxy string) {
 func ChatGPT(ask *AskChatGPT) {
 	// TODO 做超时处理
 	ctx := context.Background()
-	messages := append(ask.HistoryContent, openai.ChatCompletionMessage{
-		Role:    openai.ChatMessageRoleUser,
-		Content: ask.Content,
-	})
+	messages := make([]openai.ChatCompletionMessage, 0)
+	for _, content := range ask.Contents {
+		messages = append(messages, openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleUser,
+			Content: content,
+		})
+	}
 
 	req := openai.ChatCompletionRequest{
 		Model:     ask.Model,

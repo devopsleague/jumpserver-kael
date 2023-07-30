@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/jumpserver/kael/pkg/global"
+	"github.com/jumpserver/kael/pkg/schemas"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
 	"time"
 )
@@ -31,7 +32,7 @@ func (sh *SessionHandler) createNewSession(authInfo *protobuf.TokenAuthInfo) *JM
 	return &JMSSession{
 		Session:             session,
 		Websocket:           sh.Websocket,
-		HistoryAsks:         []*AskResponse{},
+		HistoryAsks:         make([]string, 0),
 		CurrentAskInterrupt: false,
 		CommandACLs:         authInfo.FilterRules,
 		ExpireTime:          time.Unix(authInfo.ExpireInfo.ExpireAt, 0),
@@ -39,7 +40,7 @@ func (sh *SessionHandler) createNewSession(authInfo *protobuf.TokenAuthInfo) *JM
 		SessionHandler:      sh,
 		CommandHandler:      nil,
 		ReplayHandler:       nil,
-		JMSState:            &JMSState{ID: session.Id},
+		JMSState:            &schemas.JMSState{ID: session.Id},
 	}
 }
 
