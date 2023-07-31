@@ -8,6 +8,11 @@ export function useChat() {
     chatStore.setLoading(loading)
   }
 
+  const getInputFocus = () => {
+    const dom = document.getElementsByClassName('n-input__textarea-el')[0]
+    dom?.focus()
+  }
+
   const onNewChat = (name) => {
     chatStore.setTabNum()
     console.log('chatStore: ', chatStore);
@@ -60,6 +65,7 @@ export function useChat() {
     onNewChat,
     onNewChatOrAddChatConversationById,
     hasChat,
+    getInputFocus,
     setLoading,
     addChatConversationById,
     addTemporaryLoadingChat,
