@@ -24,7 +24,6 @@ router = APIRouter()
 
 async def create_auth_info(token: Optional[str] = None) -> TokenAuthInfo:
     token_handler = TokenHandler()
-    token = 'bb984bc5-bb78-4cae-85a5-eae3633638e9'
     try:
         auth_info = token_handler.get_token_auth_info(token)
     except WispError as e:
