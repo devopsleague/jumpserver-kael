@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, inject, onUnmounted } from 'vue'
+import { ref, onMounted, computed, inject, onUnmounted, nextTick } from 'vue'
 import Message from '../Message/index.vue'
 import Empty from '../Empty/index.vue'
 import Footer from '../Footer/index.vue'
@@ -8,7 +8,7 @@ import { createWebSocket, onSend, closeWs } from '@/utils/socket'
 import { useChatStore } from '@/store'
 import { pageScroll } from '@/utils/common'
 
-const { hasChat, setLoading, addChatConversationById, addTemporaryLoadingChat, updateChatConversationContentById } = useChat()
+const { hasChat, setLoading, getInputFocus, addChatConversationById, addTemporaryLoadingChat, updateChatConversationContentById } = useChat()
 const chatStore = useChatStore()
 const $axios = inject("$axios")
 const currentConversationId = ref('')
@@ -34,6 +34,9 @@ const onWebSocketMessage = (data) => {
     chatStore.removeLastChat()
     addChatConversationById(data)
     setLoading(false)
+    nextTick(() => {
+      getInputFocus()
+    })
     if (data.type === 'finish') {
       chatStore.setFilterChatDisabled(true)
     }
@@ -48,6 +51,9 @@ const onWebSocketMessage = (data) => {
     }
     if (data.message?.type === 'finish') {
       setLoading(false)
+      nextTick(() => {
+        getInputFocus()
+      })
     }
   }
 }
