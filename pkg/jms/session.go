@@ -23,11 +23,10 @@ func NewSessionHandler(websocket *websocket.Conn) *SessionHandler {
 }
 
 func getRemoteAddress(websocket *websocket.Conn) string {
-	remoteAddress := ""
-	return remoteAddress
+	return websocket.RemoteAddr().String()
 }
 
-func (sh *SessionHandler) createNewSession(authInfo *protobuf.TokenAuthInfo) *JMSSession {
+func (sh *SessionHandler) CreateNewSession(authInfo *protobuf.TokenAuthInfo) *JMSSession {
 	session := sh.createSession(authInfo)
 	return &JMSSession{
 		Session:             session,

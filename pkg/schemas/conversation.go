@@ -24,5 +24,5 @@ type AskResponse struct {
 	ConversationID string          `json:"conversation_id,omitempty"`
 	Message        *ChatGPTMessage `json:"message,omitempty"`
 	SystemMessage  string          `json:"system_message,omitempty"`
-	Meta           ResponseMeta    `json:"meta"`
+	Meta           ResponseMeta    `json:"meta,omitempty"`
 }
