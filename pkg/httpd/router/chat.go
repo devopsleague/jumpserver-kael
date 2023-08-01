@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/jumpserver/kael/pkg/global"
 	"github.com/jumpserver/kael/pkg/httpd"
@@ -11,7 +12,9 @@ import (
 	"github.com/jumpserver/kael/pkg/manager"
 	"github.com/jumpserver/kael/pkg/schemas"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
+	"github.com/sashabaranov/go-openai"
 	"net/http"
+	"time"
 )
 
 var ChatApi = new(_ChatApi)
@@ -57,7 +60,13 @@ func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
 			conversationID := askRequest.ConversationID
 			jmss = global.SessionManager.GetJMSSession(conversationID)
 			if jmss == nil {
-				fmt.Println("-----")
+				response := schemas.AskResponse{
+					Type:           schemas.Error,
+					ConversationID: askRequest.ConversationID,
+					SystemMessage:  "current session not found",
+				}
+				jsonResponse, _ := json.Marshal(response)
+				_ = jmss.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
 				continue
 			} else {
 				jmss.JMSState.NewDialogue = true
@@ -85,23 +94,43 @@ func chatFunc(authInfo *protobuf.TokenAuthInfo, askRequest schemas.AskRequest) f
 			AnswerCh: answerCh,
 			DoneCh:   doneCh,
 		}
-		go manager.ChatGPT(askChatGPT)
+		go manager.ChatGPT(askChatGPT, jmss)
 		lastContent := ""
+		messageID := uuid.New()
 		for {
 			select {
 			case answer := <-answerCh:
+				// TODO 包装一下 websocket send 方法
 				response := schemas.AskResponse{
 					Type:           schemas.Message,
 					ConversationID: askRequest.ConversationID,
 					Message: &schemas.ChatGPTMessage{
-						Content: answer,
-						// 其他ChatGPTMessage的字段
+						Content:    answer,
+						ID:         uuid.New(),
+						Parent:     messageID,
+						CreateTime: time.Now(),
+						Type:       schemas.Message,
+						Role:       openai.ChatMessageRoleAssistant,
 					},
 				}
 				jsonResponse, _ := json.Marshal(response)
 				_ = jmss.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
 				lastContent = answer
 			case <-doneCh:
+				response := schemas.AskResponse{
+					Type:           schemas.Message,
+					ConversationID: askRequest.ConversationID,
+					Message: &schemas.ChatGPTMessage{
+						Content:    lastContent,
+						ID:         uuid.New(),
+						Parent:     messageID,
+						CreateTime: time.Now(),
+						Type:       schemas.Finish,
+						Role:       openai.ChatMessageRoleAssistant,
+					},
+				}
+				jsonResponse, _ := json.Marshal(response)
+				_ = jmss.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
 				close(answerCh)
 				return lastContent
 			}

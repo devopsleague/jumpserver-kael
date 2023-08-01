@@ -1,6 +1,7 @@
 package jms
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/jumpserver/kael/pkg/global"
 	"github.com/jumpserver/kael/pkg/schemas"
@@ -62,14 +63,14 @@ func (jmss *JMSSession) Close() {
 }
 
 func (jmss *JMSSession) NotifyToClose() {
-	// Implement the logic to notify to close the session
-	// You may need to use your ws package to send the response
 	response := &schemas.AskResponse{
 		Type:           schemas.Finish,
 		ConversationID: jmss.Session.Id,
-		SystemMessage:  "Session interrupted",
+		SystemMessage:  "会话已中断",
 	}
-	reply(jmss.Websocket, response)
+
+	jsonResponse, _ := json.Marshal(response)
+	_ = jmss.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
 }
 
 func (jmss *JMSSession) WithAudit(command string, chatFunc func(*JMSSession) string) (result string) {

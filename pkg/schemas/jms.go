@@ -7,11 +7,18 @@ type CommandRecord struct {
 	Output    string             `json:"output,omitempty"`
 	RiskLevel protobuf.RiskLevel `json:"risk_level"`
 }
+type ReviewState int
+
+const (
+	Wait ReviewState = iota
+	Rejected
+	Approve
+)
 
 type JMSState struct {
-	ID             string `json:"id"`
-	ActivateReview bool   `json:"activate_review,omitempty"`
-	NewDialogue    bool   `json:"new_dialogue,omitempty"`
+	ID             string      `json:"id"`
+	ActivateReview ReviewState `json:"activate_review,omitempty"`
+	NewDialogue    bool        `json:"new_dialogue,omitempty"`
 }
 
 type Conversation struct {

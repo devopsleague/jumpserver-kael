@@ -2,6 +2,7 @@ package jms
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/jumpserver/kael/pkg/global"
@@ -107,6 +108,18 @@ func (ch *CommandHandler) CreateAndWaitTicket(commandACL *protobuf.CommandACL) b
 }
 
 func (ch *CommandHandler) WaitForTicketStatusChange(ticketInfo *protobuf.TicketInfo) bool {
+	response := &schemas.AskResponse{
+		Type:           schemas.Waiting,
+		ConversationID: ch.Session.Id,
+		SystemMessage: fmt.Sprintf(
+			"复核请求已发起，请等待复核: [查看结果](%s): ",
+			ticketInfo.TicketDetailUrl,
+		),
+	}
+
+	jsonResponse, _ := json.Marshal(response)
+	_ = ch.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
+
 	ctx := context.Background()
 	startTime := time.Now()
 	endTime := startTime.Add(time.Duration(WAIT_TICKET_TIMEOUT) * time.Second)
@@ -120,7 +133,6 @@ func (ch *CommandHandler) WaitForTicketStatusChange(ticketInfo *protobuf.TicketI
 			fmt.Println(errorMessage)
 			break
 		}
-		systemMessage := ""
 		switch resp.Data.State {
 		case protobuf.TicketState_Approved:
 			isContinue = true
@@ -130,11 +142,11 @@ func (ch *CommandHandler) WaitForTicketStatusChange(ticketInfo *protobuf.TicketI
 		case protobuf.TicketState_Rejected:
 			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewReject
 			ticketClosed = false
-			systemMessage = "The ticket is rejected"
+
 		case protobuf.TicketState_Closed:
 			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewCancel
 			ticketClosed = false
-			systemMessage = "The ticket is closed"
+
 		default:
 			time.Sleep(WAIT_TICKET_INTERVAL)
 		}
@@ -152,26 +164,46 @@ func (ch *CommandHandler) CommandACLFilter() bool {
 	if acl != nil {
 		switch acl.Action {
 		case protobuf.CommandACL_Reject:
+			response := &schemas.AskResponse{
+				Type:           schemas.Reject,
+				ConversationID: ch.Session.Id,
+				SystemMessage:  "对话已被拒绝",
+			}
+
+			jsonResponse, _ := json.Marshal(response)
+			_ = ch.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
+
 			isContinue = false
 			ch.CommandRecord.RiskLevel = protobuf.RiskLevel(protobuf.CommandACL_Reject)
 		case protobuf.CommandACL_Warning:
 			ch.CommandRecord.RiskLevel = protobuf.RiskLevel(protobuf.CommandACL_Warning)
 		case protobuf.CommandACL_Review:
+
+			response := &schemas.AskResponse{
+				Type:           schemas.Waiting,
+				ConversationID: ch.Session.Id,
+				SystemMessage:  "您输入命令需要复核后才可以执行，是否发起复核请求？",
+				Meta:           schemas.ResponseMeta{ActivateReview: true},
+			}
+
+			jsonResponse, _ := json.Marshal(response)
+			_ = ch.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
+
 			isContinue = false
 			startTime := time.Now()
 			endTime := startTime.Add(time.Duration(60) * time.Second)
 
 			for time.Now().Before(endTime) {
 				switch ch.JMSState.ActivateReview {
-				case 0:
+				case schemas.Wait:
 					time.Sleep(1 * time.Second)
-				case 1:
-					// 复核
-					isContinue = ch.CreateAndWaitTicket(acl)
-				case 2:
-					// 拒绝
-					//ch.JMSState.ActivateReview 还原
+				case schemas.Rejected:
 					isContinue = false
+					ch.JMSState.ActivateReview = schemas.Wait
+					break
+				case schemas.Approve:
+					ch.JMSState.ActivateReview = schemas.Wait
+					isContinue = ch.CreateAndWaitTicket(acl)
 					break
 				}
 			}

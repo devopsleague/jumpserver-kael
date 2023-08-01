@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/jumpserver/kael/pkg/jms"
 	"github.com/jumpserver/kael/pkg/utils"
 	"github.com/sashabaranov/go-openai"
 	"io"
@@ -33,7 +34,7 @@ func AddProxy(config *openai.ClientConfig, proxy string) {
 	}
 }
 
-func ChatGPT(ask *AskChatGPT) {
+func ChatGPT(ask *AskChatGPT, jmss *jms.JMSSession) {
 	// TODO 做超时处理
 	ctx := context.Background()
 	messages := make([]openai.ChatCompletionMessage, 0)
@@ -59,10 +60,10 @@ func ChatGPT(ask *AskChatGPT) {
 	}
 	defer stream.Close()
 
-	fmt.Printf("Stream response: ")
 	for {
 		response, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
+		if errors.Is(err, io.EOF) || jmss.CurrentAskInterrupt {
+			jmss.CurrentAskInterrupt = false
 			fmt.Println("\nStream finished")
 			close(ask.DoneCh)
 			return
