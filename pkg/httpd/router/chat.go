@@ -2,17 +2,17 @@ package router
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/jumpserver/kael/pkg/global"
-	"github.com/jumpserver/kael/pkg/httpd"
+	"github.com/jumpserver/kael/pkg/httpd/ws"
 	"github.com/jumpserver/kael/pkg/jms"
+	"github.com/jumpserver/kael/pkg/logger"
 	"github.com/jumpserver/kael/pkg/manager"
 	"github.com/jumpserver/kael/pkg/schemas"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
 	"github.com/sashabaranov/go-openai"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -22,9 +22,9 @@ var ChatApi = new(_ChatApi)
 type _ChatApi struct{}
 
 func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
-	conn, err := httpd.UpgradeWsConn(ctx)
+	conn, err := ws.UpgradeWsConn(ctx)
 	if err != nil {
-		fmt.Println("Websocket upgrade err: ", err)
+		logger.GlobalLogger.Error("Websocket upgrade err", zap.Error(err))
 		return
 	}
 	token, ok := ctx.GetQuery("token")
@@ -35,30 +35,30 @@ func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
 
 	tokenHandler := jms.NewTokenHandler()
 	sessionHandler := jms.NewSessionHandler(conn)
-	authInfo, _ := tokenHandler.GetTokenAuthInfo(token)
+	authInfo, err := tokenHandler.GetTokenAuthInfo(token)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "auth fail"})
+		return
+	}
 
 	defer conn.Close()
 
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("Accept message error: ", err)
+			logger.GlobalLogger.Info("Accept message error")
 			continue
 		}
 
 		var askRequest schemas.AskRequest
-		err = json.Unmarshal(msg, &askRequest)
-		if err != nil {
-			fmt.Println("Invalid ask request: ", err)
-			continue
-		}
+		_ = json.Unmarshal(msg, &askRequest)
 		jmss := &jms.JMSSession{}
 		if askRequest.ConversationID == "" {
 			jmss = sessionHandler.CreateNewSession(authInfo)
 			jmss.ActiveSession()
 		} else {
 			conversationID := askRequest.ConversationID
-			jmss = global.SessionManager.GetJMSSession(conversationID)
+			jmss = jms.GlobalSessionManager.GetJMSSession(conversationID)
 			if jmss == nil {
 				response := schemas.AskResponse{
 					Type:           schemas.Error,
@@ -78,15 +78,18 @@ func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
 
 func chatFunc(authInfo *protobuf.TokenAuthInfo, askRequest schemas.AskRequest) func(jmss *jms.JMSSession) string {
 	return func(jmss *jms.JMSSession) string {
-		doneCh := make(chan bool)
+		doneCh := make(chan string)
 		answerCh := make(chan string)
+
 		model := authInfo.Platform.Protocols[0].Settings["api_mode"]
 		jmss.HistoryAsks = append(jmss.HistoryAsks, askRequest.Content)
+
 		c := manager.NewClient(
 			authInfo.Account.Secret,
 			authInfo.Asset.Address,
 			authInfo.Asset.Specific.HttpProxy,
 		)
+
 		askChatGPT := &manager.AskChatGPT{
 			Client:   c,
 			Model:    model,
@@ -94,13 +97,13 @@ func chatFunc(authInfo *protobuf.TokenAuthInfo, askRequest schemas.AskRequest) f
 			AnswerCh: answerCh,
 			DoneCh:   doneCh,
 		}
+
 		go manager.ChatGPT(askChatGPT, jmss)
-		lastContent := ""
+
 		messageID := uuid.New()
 		for {
 			select {
 			case answer := <-answerCh:
-				// TODO 包装一下 websocket send 方法
 				response := schemas.AskResponse{
 					Type:           schemas.Message,
 					ConversationID: askRequest.ConversationID,
@@ -115,13 +118,12 @@ func chatFunc(authInfo *protobuf.TokenAuthInfo, askRequest schemas.AskRequest) f
 				}
 				jsonResponse, _ := json.Marshal(response)
 				_ = jmss.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
-				lastContent = answer
-			case <-doneCh:
+			case answer := <-doneCh:
 				response := schemas.AskResponse{
 					Type:           schemas.Message,
 					ConversationID: askRequest.ConversationID,
 					Message: &schemas.ChatGPTMessage{
-						Content:    lastContent,
+						Content:    answer,
 						ID:         uuid.New(),
 						Parent:     messageID,
 						CreateTime: time.Now(),
@@ -131,8 +133,9 @@ func chatFunc(authInfo *protobuf.TokenAuthInfo, askRequest schemas.AskRequest) f
 				}
 				jsonResponse, _ := json.Marshal(response)
 				_ = jmss.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
+				close(doneCh)
 				close(answerCh)
-				return lastContent
+				return answer
 			}
 		}
 	}

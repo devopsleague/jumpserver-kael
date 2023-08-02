@@ -1,9 +1,10 @@
-package httpd
+package ws
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/jumpserver/kael/pkg/logger"
 	"net/http"
 )
 
@@ -24,11 +25,15 @@ func UpgradeWsConn(ctx *gin.Context) (*websocket.Conn, error) {
 	}
 
 	conn.SetPingHandler(func(appData string) error {
-		fmt.Println("Accept ping message: ", appData)
+		logger.GlobalLogger.Info(
+			fmt.Sprintf("Accept ping message: %s", appData),
+		)
 		return conn.WriteMessage(websocket.PongMessage, []byte("Pong"))
 	})
 	conn.SetPongHandler(func(appData string) error {
-		fmt.Println("Accept pong message: ", appData)
+		logger.GlobalLogger.Info(
+			fmt.Sprintf("Accept pong message: %s", appData),
+		)
 		return conn.WriteMessage(websocket.PongMessage, []byte("Ping"))
 	})
 	conn.RemoteAddr()

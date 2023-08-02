@@ -19,7 +19,7 @@ type Config struct {
 var GlobalConfig *Config
 
 func Setup(configPath string) {
-	var conf = getDefaultConfig()
+	conf := getDefaultConfig()
 	loadConfigFromEnv(&conf)
 	loadConfigFromFile(configPath, &conf)
 	GlobalConfig = &conf

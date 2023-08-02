@@ -3,9 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/jumpserver/kael/pkg/config"
-	"github.com/jumpserver/kael/pkg/global"
 	"github.com/jumpserver/kael/pkg/httpd"
-	"github.com/jumpserver/kael/pkg/jms"
+	"github.com/jumpserver/kael/pkg/httpd/grpc"
 	"github.com/jumpserver/kael/pkg/logger"
 	"os"
 	"os/signal"
@@ -22,12 +21,11 @@ var (
 
 func init() {
 	flag.StringVar(&configPath, "f", "config.yml", "config.yml path")
-
 }
 
 type Kael struct {
 	webSrv     *httpd.Server
-	grpcClient *jms.GrpcClient
+	grpcClient *grpc.Client
 }
 
 func (k *Kael) Start() {
@@ -39,6 +37,7 @@ func (k *Kael) Stop() {
 	k.webSrv.Stop()
 	k.grpcClient.Stop()
 }
+
 func main() {
 	flag.Parse()
 	config.Setup(configPath)
@@ -47,10 +46,8 @@ func main() {
 	signal.Notify(gracefulStop, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	app := &Kael{
 		webSrv:     httpd.NewServer(),
-		grpcClient: jms.NewClient(),
+		grpcClient: grpc.GlobalGrpcClient,
 	}
-	global.GrpcClient = app.grpcClient
-	global.SessionManager = jms.NewSessionManager()
 	app.Start()
 	<-gracefulStop
 	app.Stop()

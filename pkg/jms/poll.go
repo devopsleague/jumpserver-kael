@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/jumpserver/kael/pkg/config"
-	"github.com/jumpserver/kael/pkg/global"
-	"github.com/jumpserver/wisp/pkg/logger"
+	"github.com/jumpserver/kael/pkg/httpd/grpc"
+	"github.com/jumpserver/kael/pkg/logger"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
+	"go.uber.org/zap"
 	"io"
 )
 
@@ -22,19 +23,19 @@ func (p *PollJMSEvent) ClearZombieSession() {
 		ReplayDir: config.GlobalConfig.ReplayFolderPath,
 	}
 
-	resp, err := global.GrpcClient.Client.ScanRemainReplays(ctx, req)
+	resp, err := grpc.GlobalGrpcClient.Client.ScanRemainReplays(ctx, req)
 	if err != nil || !resp.Status.Ok {
-		errorMessage := fmt.Sprintf("Failed to scan remain replay")
-		fmt.Println(errorMessage)
+		logger.GlobalLogger.Error("Failed to scan remain replay")
 	} else {
-		logger.Info("Scan remain replay success")
+		logger.GlobalLogger.Info("Scan remain replay success")
 	}
 }
 
 func (p *PollJMSEvent) WaitForKillSessionMessage() {
-	stream, err := global.GrpcClient.Client.DispatchTask(context.Background())
+	stream, err := grpc.GlobalGrpcClient.Client.DispatchTask(context.Background())
 	if err != nil {
-		fmt.Println(err)
+		logger.GlobalLogger.Error("dispatch task err", zap.Error(err))
+		return
 	}
 	waitChan := make(chan struct{})
 	for {
@@ -45,13 +46,14 @@ func (p *PollJMSEvent) WaitForKillSessionMessage() {
 			break
 		}
 		if err != nil {
-			fmt.Printf("Failed to receive a note : %s\n", err)
+			logger.GlobalLogger.Error("Failed to receive a note", zap.Error(err))
+			continue
 		}
 
 		task := taskResponse.Task
 		sessionId := task.SessionId
 		taskAction := task.Action
-		targetSession := global.SessionManager.GetJMSSession(sessionId)
+		targetSession := GlobalSessionManager.GetJMSSession(sessionId)
 		if targetSession != nil {
 			if taskAction == protobuf.TaskAction_KillSession {
 				targetSession.Close()
@@ -60,10 +62,10 @@ func (p *PollJMSEvent) WaitForKillSessionMessage() {
 				Id: task.SessionId,
 			}
 
-			resp, _ := global.GrpcClient.Client.FinishSession(context.Background(), req)
+			resp, _ := grpc.GlobalGrpcClient.Client.FinishSession(context.Background(), req)
 			if !resp.Status.Ok {
 				errorMessage := fmt.Sprintf("Failed to finish session: %s", resp.Status.Err)
-				fmt.Println(errorMessage)
+				logger.GlobalLogger.Error(errorMessage)
 			}
 		}
 	}

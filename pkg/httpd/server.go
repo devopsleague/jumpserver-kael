@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jumpserver/kael/pkg/config"
 	"github.com/jumpserver/kael/pkg/httpd/router"
+	"github.com/jumpserver/kael/pkg/logger"
 	"net"
 	"net/http"
 	"time"
@@ -24,7 +25,9 @@ type Server struct {
 }
 
 func (s *Server) Start() {
-	fmt.Println("Start HTTP Server at ", s.Srv.Addr)
+	logger.GlobalLogger.Info(
+		fmt.Sprintf("Start HTTP Server at %s", s.Srv.Addr),
+	)
 	fmt.Println(s.Srv.ListenAndServe())
 }
 

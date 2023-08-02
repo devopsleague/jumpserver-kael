@@ -2,10 +2,10 @@ package jms
 
 import (
 	"context"
-	"fmt"
-	"github.com/jumpserver/kael/pkg/global"
+	"errors"
+	"github.com/jumpserver/kael/pkg/httpd/grpc"
+	"github.com/jumpserver/kael/pkg/logger"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
-	"log"
 )
 
 type TokenHandler struct{}
@@ -18,15 +18,11 @@ func (th *TokenHandler) GetTokenAuthInfo(token string) (*protobuf.TokenAuthInfo,
 	ctx := context.Background()
 	req := &protobuf.TokenRequest{Token: token}
 
-	resp, err := global.GrpcClient.Client.GetTokenAuthInfo(ctx, req)
-	if err != nil {
-		fmt.Println("Failed to get token")
-		return nil, err
-	}
+	resp, _ := grpc.GlobalGrpcClient.Client.GetTokenAuthInfo(ctx, req)
 	if !resp.Status.Ok {
 		errorMessage := "Failed to get token: " + resp.Status.Err
-		log.Printf(errorMessage)
-		return nil, fmt.Errorf(errorMessage)
+		logger.GlobalLogger.Error(errorMessage)
+		return nil, errors.New(errorMessage)
 	}
 	return resp.Data, nil
 }

@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/jumpserver/kael/pkg/global"
+	"github.com/jumpserver/kael/pkg/httpd/grpc"
+	"github.com/jumpserver/kael/pkg/logger"
 	"github.com/jumpserver/kael/pkg/schemas"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
 	"time"
@@ -62,10 +63,10 @@ func (sh *SessionHandler) createSession(authInfo *protobuf.TokenAuthInfo) *proto
 		Data: reqSession,
 	}
 
-	resp, _ := global.GrpcClient.Client.CreateSession(ctx, req)
+	resp, _ := grpc.GlobalGrpcClient.Client.CreateSession(ctx, req)
 	if !resp.Status.Ok {
 		errorMessage := fmt.Sprintf("Failed to create session: %s", resp.Status.Err)
-		fmt.Println(errorMessage)
+		logger.GlobalLogger.Error(errorMessage)
 	}
 	return resp.Data
 }
@@ -77,9 +78,9 @@ func (sh *SessionHandler) closeSession(session *protobuf.Session) {
 		DateEnd: time.Now().Unix(),
 	}
 
-	resp, _ := global.GrpcClient.Client.FinishSession(ctx, req)
+	resp, _ := grpc.GlobalGrpcClient.Client.FinishSession(ctx, req)
 	if !resp.Status.Ok {
 		errorMessage := fmt.Sprintf("Failed to close session: %s", resp.Status.Err)
-		fmt.Println(errorMessage)
+		logger.GlobalLogger.Error(errorMessage)
 	}
 }

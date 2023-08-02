@@ -3,7 +3,6 @@ package router
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/jumpserver/kael/pkg/global"
 	"github.com/jumpserver/kael/pkg/jms"
 	"github.com/jumpserver/kael/pkg/schemas"
 	"net/http"
@@ -14,7 +13,7 @@ var HandlerApi = new(_HandlerApi)
 type _HandlerApi struct{}
 
 func getJmsSession(sessionID string) (*jms.JMSSession, error) {
-	jmsSession := global.SessionManager.GetJMSSession(sessionID)
+	jmsSession := jms.GlobalSessionManager.GetJMSSession(sessionID)
 	if jmsSession != nil {
 		return jmsSession, nil
 	}

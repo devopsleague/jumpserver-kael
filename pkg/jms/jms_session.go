@@ -3,7 +3,6 @@ package jms
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/jumpserver/kael/pkg/global"
 	"github.com/jumpserver/kael/pkg/schemas"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
 	"time"
@@ -24,7 +23,7 @@ type JMSSession struct {
 }
 
 func (jmss *JMSSession) ActiveSession() {
-	global.SessionManager.RegisterJMSSession(jmss)
+	GlobalSessionManager.RegisterJMSSession(jmss)
 	jmss.ReplayHandler = NewReplayHandler(jmss.Session)
 	jmss.CommandHandler = NewCommandHandler(
 		jmss.Websocket, jmss.Session, jmss.CommandACLs, jmss.JMSState,
@@ -58,7 +57,7 @@ func (jmss *JMSSession) Close() {
 	time.Sleep(1 * time.Second)
 	jmss.ReplayHandler.Upload()
 	jmss.SessionHandler.closeSession(jmss.Session)
-	global.SessionManager.UnregisterJMSSession(jmss)
+	GlobalSessionManager.UnregisterJMSSession(jmss)
 	jmss.NotifyToClose()
 }
 

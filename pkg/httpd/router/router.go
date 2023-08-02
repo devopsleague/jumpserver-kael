@@ -9,9 +9,13 @@ func CreateRouter() *gin.Engine {
 	eng := gin.Default()
 	eng.Use(middlewares.CORSMiddleware())
 	karlGroup := eng.Group("/kael")
-	karlGroup.GET("/health/", HealthApi.HealthStatusHandler)
+	karlGroup.Static("/static/", "ui")
+	karlGroup.Static("/assets/", "ui/assets")
+
 	karlGroup.GET("/chat/", ChatApi.ChatHandler)
-	karlGroup.GET("/jms_state/", HandlerApi.JmsStateHandler)
-	karlGroup.GET("/interrupt_current_ask/", HandlerApi.InterruptCurrentAskHandler)
+	karlGroup.GET("/connect", ConnectApi.ConnectHandler)
+	karlGroup.GET("/health/", HealthApi.HealthStatusHandler)
+	karlGroup.POST("/jms_state/", HandlerApi.JmsStateHandler)
+	karlGroup.POST("/interrupt_current_ask/", HandlerApi.InterruptCurrentAskHandler)
 	return eng
 }

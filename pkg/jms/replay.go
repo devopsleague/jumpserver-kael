@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/jumpserver/kael/pkg/config"
-	"github.com/jumpserver/kael/pkg/global"
+	"github.com/jumpserver/kael/pkg/httpd/grpc"
+	"github.com/jumpserver/kael/pkg/logger"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
+	"go.uber.org/zap"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,8 +34,7 @@ func (rh *ReplayHandler) buildFile() {
 	replayFilePath := filepath.Join(config.GlobalConfig.ReplayFolderPath, fmt.Sprintf("%s.cast", rh.Session.Id))
 	file, err := os.Create(replayFilePath)
 	if err != nil {
-		errorMessage := fmt.Sprintf("Failed to create replay file:  %s", err)
-		fmt.Println(errorMessage)
+		logger.GlobalLogger.Error("Failed to create replay file", zap.Error(err))
 		return
 	}
 	rh.File = file
@@ -45,7 +46,7 @@ func (rh *ReplayHandler) buildFile() {
 func (rh *ReplayHandler) ensureReplayDir() {
 	err := os.MkdirAll(config.GlobalConfig.ReplayFolderPath, os.ModePerm)
 	if err != nil {
-		fmt.Println("Failed to create replay directory")
+		logger.GlobalLogger.Error("Failed to create replay directory")
 	}
 }
 
@@ -79,14 +80,14 @@ func (rh *ReplayHandler) Upload() {
 		SessionId:      rh.Session.Id,
 		ReplayFilePath: rh.File.Name(),
 	}
-	resp, _ := global.GrpcClient.Client.UploadReplayFile(ctx, replayRequest)
+	resp, _ := grpc.GlobalGrpcClient.Client.UploadReplayFile(ctx, replayRequest)
 	if !resp.Status.Ok {
 		errorMessage := fmt.Sprintf(
 			"Failed to upload replay file: %s %s",
 			rh.File.Name(),
 			resp.Status.Err,
 		)
-		fmt.Println(errorMessage)
+		logger.GlobalLogger.Error(errorMessage)
 	}
 }
 

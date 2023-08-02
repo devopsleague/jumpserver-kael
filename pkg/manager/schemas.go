@@ -7,5 +7,5 @@ type AskChatGPT struct {
 	Model    string
 	Contents []string
 	AnswerCh chan string
-	DoneCh   chan bool
+	DoneCh   chan string
 }

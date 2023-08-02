@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jumpserver/kael/pkg/jms"
+	"github.com/jumpserver/kael/pkg/logger"
 	"github.com/jumpserver/kael/pkg/utils"
 	"github.com/sashabaranov/go-openai"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/url"
@@ -54,27 +56,25 @@ func ChatGPT(ask *AskChatGPT, jmss *jms.JMSSession) {
 
 	stream, err := ask.Client.CreateChatCompletionStream(ctx, req)
 	if err != nil {
-		fmt.Printf("ChatCompletionStream error: %v\n", err)
-		close(ask.DoneCh)
+		ask.DoneCh <- err.Error()
 		return
 	}
 	defer stream.Close()
-
+	content := ""
 	for {
 		response, err := stream.Recv()
 		if errors.Is(err, io.EOF) || jmss.CurrentAskInterrupt {
 			jmss.CurrentAskInterrupt = false
-			fmt.Println("\nStream finished")
-			close(ask.DoneCh)
+			ask.DoneCh <- content
 			return
 		}
 
 		if err != nil {
-			fmt.Printf("\nStream error: %v\n", err)
-			close(ask.DoneCh)
+			logger.GlobalLogger.Error("openai stream error", zap.Error(err))
+			ask.DoneCh <- content
 			return
 		}
-
-		ask.AnswerCh <- response.Choices[0].Delta.Content
+		content = response.Choices[0].Delta.Content
+		ask.AnswerCh <- content
 	}
 }

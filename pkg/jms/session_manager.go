@@ -2,12 +2,10 @@ package jms
 
 import "sync"
 
+var GlobalSessionManager = &SessionManager{}
+
 type SessionManager struct {
 	store sync.Map
-}
-
-func NewSessionManager() *SessionManager {
-	return &SessionManager{}
 }
 
 func (sm *SessionManager) RegisterJMSSession(jmsSession *JMSSession) string {

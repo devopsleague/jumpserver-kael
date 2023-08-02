@@ -11,4 +11,5 @@ func Setup() {
 	cores := Zap.GetZapCores()
 	logger := zap.New(zapcore.NewTee(cores...))
 	GlobalLogger = logger.WithOptions(zap.AddCaller())
+	zap.ReplaceGlobals(GlobalLogger)
 }

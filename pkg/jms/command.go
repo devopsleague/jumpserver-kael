@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/jumpserver/kael/pkg/global"
+	"github.com/jumpserver/kael/pkg/httpd/grpc"
+	"github.com/jumpserver/kael/pkg/logger"
 	"github.com/jumpserver/kael/pkg/schemas"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
 	"regexp"
@@ -57,10 +58,9 @@ func (ch *CommandHandler) RecordCommand() {
 		CmdGroupId: ch.CmdGroupID,
 	}
 
-	resp, err := global.GrpcClient.Client.UploadCommand(ctx, req)
-	if err != nil || !resp.Status.Ok {
-		errorMessage := "Failed to upload command"
-		fmt.Println(errorMessage)
+	resp, _ := grpc.GlobalGrpcClient.Client.UploadCommand(ctx, req)
+	if !resp.Status.Ok {
+		logger.GlobalLogger.Error("Failed to upload command")
 	}
 }
 
@@ -73,8 +73,7 @@ func (ch *CommandHandler) MatchRule() *protobuf.CommandACL {
 			}
 			re, err := regexp.Compile(flags + commandGroup.Pattern)
 			if err != nil {
-				errorMessage := "Failed to compile regular expression"
-				fmt.Println(errorMessage)
+				logger.GlobalLogger.Error("Failed to compile regular expression")
 				return nil
 			}
 
@@ -97,10 +96,9 @@ func (ch *CommandHandler) CreateAndWaitTicket(commandACL *protobuf.CommandACL) b
 		CmdAclId:  ch.CmdACLID,
 	}
 
-	resp, err := global.GrpcClient.Client.CreateCommandTicket(ctx, req)
-	if err != nil || !resp.Status.Ok {
-		errorMessage := "Failed to create ticket"
-		fmt.Println(errorMessage)
+	resp, _ := grpc.GlobalGrpcClient.Client.CreateCommandTicket(ctx, req)
+	if !resp.Status.Ok {
+		logger.GlobalLogger.Error("Failed to create ticket")
 		return false
 	}
 
@@ -127,10 +125,9 @@ func (ch *CommandHandler) WaitForTicketStatusChange(ticketInfo *protobuf.TicketI
 	isContinue := false
 	for time.Now().Before(endTime) {
 		req := &protobuf.TicketRequest{Req: ticketInfo.CheckReq}
-		resp, err := global.GrpcClient.Client.CheckTicketState(ctx, req)
-		if err != nil || !resp.Status.Ok {
-			errorMessage := "Failed to check ticket status"
-			fmt.Println(errorMessage)
+		resp, _ := grpc.GlobalGrpcClient.Client.CheckTicketState(ctx, req)
+		if !resp.Status.Ok {
+			logger.GlobalLogger.Error("Failed to check ticket status")
 			break
 		}
 		switch resp.Data.State {
@@ -178,7 +175,6 @@ func (ch *CommandHandler) CommandACLFilter() bool {
 		case protobuf.CommandACL_Warning:
 			ch.CommandRecord.RiskLevel = protobuf.RiskLevel(protobuf.CommandACL_Warning)
 		case protobuf.CommandACL_Review:
-
 			response := &schemas.AskResponse{
 				Type:           schemas.Waiting,
 				ConversationID: ch.Session.Id,
@@ -218,9 +214,8 @@ func (ch *CommandHandler) CloseTicket(ticketInfo *protobuf.TicketInfo) {
 		Req: ticketInfo.CancelReq,
 	}
 
-	resp, err := global.GrpcClient.Client.CancelTicket(ctx, req)
-	if err != nil || !resp.Status.Ok {
-		errorMessage := "Failed to close ticket"
-		fmt.Println(errorMessage)
+	resp, _ := grpc.GlobalGrpcClient.Client.CancelTicket(ctx, req)
+	if !resp.Status.Ok {
+		logger.GlobalLogger.Error("Failed to close ticket")
 	}
 }
