@@ -42,7 +42,7 @@ const options = computed(() => {
 <template>
   <div
     ref="messageRef" :class="{'dark:bg-[#444654]': asRawText}">
-    <div class="flex w-800px mx-auto pt-18px pb-18px">
+    <div class="flex w-full max-w-800px mx-auto p-4">
       <div class="avatar mr-6px ml-6px">
         <n-avatar round :src="asRawText ? robot : userAvatar" />
       </div>

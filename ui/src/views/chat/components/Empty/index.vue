@@ -62,7 +62,7 @@ const onSendHandle = (value) => {
       <span class="title">ChatGPT</span>
       <span class="sub-title column-alignment">via JumpServer</span>
     </div>
-    <div class="content">
+    <div class="content px-3">
       <div v-for="(item) in lists" class="layout">
         <i :class="item.icon" class="text-center"></i>
         <p class="text-center font-normal text-lg">{{ item.title }}</p>
@@ -73,9 +73,7 @@ const onSendHandle = (value) => {
         </ul>
       </div>
     </div>
-    <div class="footer">
-      <Footer @send="onSendHandle" />
-    </div>
+    <Footer @send="onSendHandle" />
   </div>
 </template>
 

@@ -1,12 +1,14 @@
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import Sidebar from './components/Sidebar/index.vue'
 import Content from './components/Content/index.vue'
 import { LunaEvent } from '@/utils/luna'
 import { useAppStore } from '@/store'
+import { isMobile } from '@/utils/common'
 
 const appStore = useAppStore()
 const lunaEvent = new LunaEvent()
+const isShowMobile = ref(false)
 
 const onSwitchSidebar = () => {
   appStore.switchSidebar()
@@ -14,18 +16,18 @@ const onSwitchSidebar = () => {
 
 onMounted(() => {
   lunaEvent.init()
+  if (isMobile()) {
+    isShowMobile.value = true
+  }
 })
 
 </script>
 
 <template>
   <div class="root">
-    <n-layout
-    has-sider
-    class="root-layout"
-    >
-    <Sidebar />
-    <n-layout-content class="dark:bg-[#343540]">
+    <n-layout  has-sider class="root-layout">
+      <Sidebar />
+      <n-layout-content class="dark:bg-[#343540]">
         <button
           v-if="!appStore.sidebarWidth"
           secondary
@@ -35,6 +37,11 @@ onMounted(() => {
           <SvgIcon name="switch" />
         </button>
         <Content />
+        <div
+          v-if="isShowMobile && appStore.sidebarWidth > 0"
+          class="show-mobile"
+          @click="onSwitchSidebar"
+        ></div>
       </n-layout-content>
     </n-layout>
   </div>
@@ -59,5 +66,14 @@ onMounted(() => {
   position: absolute;
   top: 16px;
   left: 16px;
+  z-index: 11;
+}
+.show-mobile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 </style>

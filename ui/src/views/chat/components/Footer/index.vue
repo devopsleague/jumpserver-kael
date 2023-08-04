@@ -44,13 +44,13 @@ const onKeyEnter = (event) => {
 </script>
 
 <template>
-  <footer class="footer dark:bg-[#343540]">
+  <footer class="footer dark:bg-[#343540] w-full">
     <div v-if="loading" class="sticky bottom-0 left-0 flex justify-center">
       <n-button type="warning" @click="onStopHandle()">
         <i class="fa fa-stop-circle-o mr-4px"></i> Stop
       </n-button>
     </div>
-    <div class="flex w-800px mx-auto p-4">
+    <div class="flex w-full max-w-800px mx-auto p-4">
       <n-input
         v-model:value="value"
         type="textarea"
