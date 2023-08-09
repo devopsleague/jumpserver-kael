@@ -3,3 +3,6 @@
 .DS_Store
 .config.yml
 .vscode
+data
+script.go
+config.yml
