@@ -1,2 +1,0 @@
-class WispError(Exception):
-    pass
