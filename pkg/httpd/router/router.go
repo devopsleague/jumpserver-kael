@@ -9,8 +9,8 @@ func CreateRouter() *gin.Engine {
 	eng := gin.Default()
 	eng.Use(middlewares.CORSMiddleware())
 	karlGroup := eng.Group("/kael")
-	karlGroup.Static("/static/", "ui")
-	karlGroup.Static("/assets/", "ui/assets")
+	karlGroup.Static("/static/", "ui/dist")
+	karlGroup.Static("/assets/", "ui/dist/assets")
 
 	karlGroup.GET("/chat/", ChatApi.ChatHandler)
 	karlGroup.GET("/connect", ConnectApi.ConnectHandler)

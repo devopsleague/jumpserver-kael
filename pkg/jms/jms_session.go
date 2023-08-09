@@ -38,7 +38,7 @@ func (jmss *JMSSession) MaximumIdleTimeDetection() {
 		currentTime := time.Now()
 		idleTime := currentTime.Sub(lastActiveTime)
 
-		if idleTime.Seconds() >= float64(jmss.MaxIdleTimeDelta*60) {
+		if idleTime.Seconds() >= float64(1*60) {
 			jmss.Close()
 			break
 		}

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/jumpserver/kael/pkg/jms"
 	"github.com/jumpserver/kael/pkg/logger"
-	"github.com/jumpserver/kael/pkg/utils"
 	"github.com/sashabaranov/go-openai"
 	"go.uber.org/zap"
 	"io"
@@ -40,6 +39,7 @@ func ChatGPT(ask *AskChatGPT, jmss *jms.JMSSession) {
 	// TODO 做超时处理
 	ctx := context.Background()
 	messages := make([]openai.ChatCompletionMessage, 0)
+
 	for _, content := range ask.Contents {
 		messages = append(messages, openai.ChatCompletionMessage{
 			Role:    openai.ChatMessageRoleUser,
@@ -48,10 +48,9 @@ func ChatGPT(ask *AskChatGPT, jmss *jms.JMSSession) {
 	}
 
 	req := openai.ChatCompletionRequest{
-		Model:     ask.Model,
-		MaxTokens: utils.GetMaxInt(),
-		Messages:  messages,
-		Stream:    true,
+		Model:    ask.Model,
+		Messages: messages,
+		Stream:   true,
 	}
 
 	stream, err := ask.Client.CreateChatCompletionStream(ctx, req)
@@ -63,6 +62,7 @@ func ChatGPT(ask *AskChatGPT, jmss *jms.JMSSession) {
 	content := ""
 	for {
 		response, err := stream.Recv()
+
 		if errors.Is(err, io.EOF) || jmss.CurrentAskInterrupt {
 			jmss.CurrentAskInterrupt = false
 			ask.DoneCh <- content
@@ -74,7 +74,7 @@ func ChatGPT(ask *AskChatGPT, jmss *jms.JMSSession) {
 			ask.DoneCh <- content
 			return
 		}
-		content = response.Choices[0].Delta.Content
+		content += response.Choices[0].Delta.Content
 		ask.AnswerCh <- content
 	}
 }

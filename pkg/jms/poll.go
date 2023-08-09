@@ -77,7 +77,7 @@ func (p *PollJMSEvent) Start() {
 	p.WaitForKillSessionMessage()
 }
 
-func setupPollJMSEvent() {
+func SetupPollJMSEvent() {
 	jmsEvent := NewPollJMSEvent()
 	go jmsEvent.Start()
 }

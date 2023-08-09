@@ -36,6 +36,5 @@ func UpgradeWsConn(ctx *gin.Context) (*websocket.Conn, error) {
 		)
 		return conn.WriteMessage(websocket.PongMessage, []byte("Ping"))
 	})
-	conn.RemoteAddr()
 	return conn, nil
 }

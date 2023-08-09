@@ -5,6 +5,7 @@ import (
 	"github.com/jumpserver/kael/pkg/config"
 	"github.com/jumpserver/kael/pkg/httpd"
 	"github.com/jumpserver/kael/pkg/httpd/grpc"
+	"github.com/jumpserver/kael/pkg/jms"
 	"github.com/jumpserver/kael/pkg/logger"
 	"os"
 	"os/signal"
@@ -31,6 +32,7 @@ type Kael struct {
 func (k *Kael) Start() {
 	go k.webSrv.Start()
 	k.grpcClient.Start()
+	jms.SetupPollJMSEvent()
 }
 
 func (k *Kael) Stop() {

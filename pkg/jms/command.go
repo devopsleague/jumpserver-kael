@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/dlclark/regexp2"
 	"github.com/gorilla/websocket"
 	"github.com/jumpserver/kael/pkg/httpd/grpc"
 	"github.com/jumpserver/kael/pkg/logger"
 	"github.com/jumpserver/kael/pkg/schemas"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
-	"regexp"
-	"strings"
 	"time"
 )
 
@@ -67,24 +66,27 @@ func (ch *CommandHandler) RecordCommand() {
 func (ch *CommandHandler) MatchRule() *protobuf.CommandACL {
 	for _, commandACL := range ch.CommandACLs {
 		for _, commandGroup := range commandACL.CommandGroups {
-			flags := ""
+			regexp2Opt := regexp2.None
 			if commandGroup.IgnoreCase {
-				flags = "(?i)"
+				regexp2Opt = regexp2.IgnoreCase
 			}
-			re, err := regexp.Compile(flags + commandGroup.Pattern)
+
+			re, err := regexp2.Compile(commandGroup.Pattern, regexp2Opt)
 			if err != nil {
 				logger.GlobalLogger.Error("Failed to compile regular expression")
 				return nil
 			}
 
-			if re.MatchString(strings.ToLower(ch.CommandRecord.Input)) {
-				ch.CmdACLID = commandACL.Id
-				ch.CmdGroupID = commandGroup.Id
-				return commandACL
+			found, err := re.FindStringMatch(ch.CommandRecord.Input)
+			if err != nil || found == nil {
+				continue
 			}
+
+			ch.CmdACLID = commandACL.Id
+			ch.CmdGroupID = commandGroup.Id
+			return commandACL
 		}
 	}
-
 	return nil
 }
 

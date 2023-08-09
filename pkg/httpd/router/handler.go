@@ -32,7 +32,7 @@ func (s *_HandlerApi) InterruptCurrentAskHandler(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 		return
 	}
-	jmsSession.CurrentAskInterrupt = false
+	jmsSession.CurrentAskInterrupt = true
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
 

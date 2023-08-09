@@ -27,12 +27,14 @@ func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
 		logger.GlobalLogger.Error("Websocket upgrade err", zap.Error(err))
 		return
 	}
+
 	token, ok := ctx.GetQuery("token")
 	if !ok {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "token"})
 		return
 	}
 
+	currentJMSS := make([]*jms.JMSSession, 0)
 	tokenHandler := jms.NewTokenHandler()
 	sessionHandler := jms.NewSessionHandler(conn)
 	authInfo, err := tokenHandler.GetTokenAuthInfo(token)
@@ -46,7 +48,17 @@ func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			logger.GlobalLogger.Info("Accept message error")
+			logger.GlobalLogger.Info("Accept message error or connect closed")
+			if len(currentJMSS) != 0 {
+				for _, jmss := range currentJMSS {
+					jmss.Close()
+				}
+			}
+			return
+		}
+
+		if string(msg) == "ping" {
+			_ = conn.WriteMessage(websocket.TextMessage, []byte("pong"))
 			continue
 		}
 
@@ -56,6 +68,7 @@ func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
 		if askRequest.ConversationID == "" {
 			jmss = sessionHandler.CreateNewSession(authInfo)
 			jmss.ActiveSession()
+			currentJMSS = append(currentJMSS, jmss)
 		} else {
 			conversationID := askRequest.ConversationID
 			jmss = jms.GlobalSessionManager.GetJMSSession(conversationID)
@@ -99,18 +112,16 @@ func chatFunc(authInfo *protobuf.TokenAuthInfo, askRequest schemas.AskRequest) f
 		}
 
 		go manager.ChatGPT(askChatGPT, jmss)
-
 		messageID := uuid.New()
 		for {
 			select {
 			case answer := <-answerCh:
 				response := schemas.AskResponse{
 					Type:           schemas.Message,
-					ConversationID: askRequest.ConversationID,
+					ConversationID: jmss.Session.Id,
 					Message: &schemas.ChatGPTMessage{
 						Content:    answer,
-						ID:         uuid.New(),
-						Parent:     messageID,
+						ID:         messageID,
 						CreateTime: time.Now(),
 						Type:       schemas.Message,
 						Role:       openai.ChatMessageRoleAssistant,
@@ -121,11 +132,10 @@ func chatFunc(authInfo *protobuf.TokenAuthInfo, askRequest schemas.AskRequest) f
 			case answer := <-doneCh:
 				response := schemas.AskResponse{
 					Type:           schemas.Message,
-					ConversationID: askRequest.ConversationID,
+					ConversationID: jmss.Session.Id,
 					Message: &schemas.ChatGPTMessage{
 						Content:    answer,
-						ID:         uuid.New(),
-						Parent:     messageID,
+						ID:         messageID,
 						CreateTime: time.Now(),
 						Type:       schemas.Finish,
 						Role:       openai.ChatMessageRoleAssistant,
