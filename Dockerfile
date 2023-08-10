@@ -58,6 +58,9 @@ RUN --mount=type=cache,target=/root/.cache \
     && go build -ldflags "$GOFlAGS" -o kael ./cmd/kael \
     && set -x && ls -al .
 
+RUN mkdir /opt/kael/release \
+    && mv /opt/kael/entrypoint.sh /opt/kael/release
+
 
 FROM debian:bullseye-slim
 ARG TARGETARCH
@@ -91,6 +94,7 @@ WORKDIR /opt/kael/
 COPY --from=ui-build /opt/kael/ui/dist ./ui/dist
 COPY --from=stage-wisp-build /go/bin/wisp /usr/local/bin/wisp
 COPY --from=kael-build /opt/kael/kael .
+COPY --from=kael-build /opt/kael/release .
 
 RUN chmod +x ./entrypoint.sh
 
