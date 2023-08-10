@@ -60,7 +60,8 @@ func (p *PollJMSEvent) waitForKillSessionMessage() {
 		if targetSession != nil {
 			switch taskAction {
 			case protobuf.TaskAction_KillSession:
-				targetSession.Close()
+				reason := "当前会话已被中断"
+				targetSession.Close(reason)
 				req := &protobuf.SessionFinishRequest{
 					Id: task.SessionId,
 				}
