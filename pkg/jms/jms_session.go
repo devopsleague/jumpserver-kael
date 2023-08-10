@@ -41,7 +41,8 @@ func (jmss *JMSSession) MaximumIdleTimeDetection() {
 		idleTime := currentTime.Sub(lastActiveTime)
 
 		if idleTime.Seconds() >= float64(jmss.MaxIdleTime*60) {
-			jmss.Close()
+			reason := "超过当前会话最大空闲时间, 会话中断"
+			jmss.Close(reason)
 			break
 		}
 
@@ -61,27 +62,28 @@ func (jmss *JMSSession) MaxSessionTimeDetection() {
 		idleTime := currentTime.Sub(lastActiveTime)
 
 		if idleTime.Seconds() >= float64(jmss.MaxSessionTime*60*60) {
-			jmss.Close()
+			reason := "超过当前会话最大时间, 会话中断"
+			jmss.Close(reason)
 			break
 		}
 		time.Sleep(3 * time.Second)
 	}
 }
 
-func (jmss *JMSSession) Close() {
+func (jmss *JMSSession) Close(reason string) {
 	jmss.CurrentAskInterrupt = true
 	time.Sleep(1 * time.Second)
 	jmss.ReplayHandler.Upload()
 	jmss.SessionHandler.closeSession(jmss.Session)
 	GlobalSessionManager.UnregisterJMSSession(jmss)
-	jmss.NotifyToClose()
+	jmss.NotifyToClose(reason)
 }
 
-func (jmss *JMSSession) NotifyToClose() {
+func (jmss *JMSSession) NotifyToClose(reason string) {
 	response := &schemas.AskResponse{
 		Type:           schemas.Finish,
 		ConversationID: jmss.Session.Id,
-		SystemMessage:  "会话已中断",
+		SystemMessage:  reason,
 	}
 
 	jsonResponse, _ := json.Marshal(response)

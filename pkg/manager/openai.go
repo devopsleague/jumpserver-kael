@@ -11,11 +11,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 func NewClient(authToken, baseURL, proxy string) *openai.Client {
 	config := openai.DefaultConfig(authToken)
-	config.BaseURL = baseURL
+	config.BaseURL = strings.TrimRight(baseURL, "/")
 	if proxy != "" {
 		AddProxy(&config, proxy)
 	}

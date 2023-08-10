@@ -51,7 +51,8 @@ func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
 			logger.GlobalLogger.Info("Accept message error or connect closed")
 			if len(currentJMSS) != 0 {
 				for _, jmss := range currentJMSS {
-					jmss.Close()
+					reason := "Websocket已关闭, 会话中断"
+					jmss.Close(reason)
 				}
 			}
 			return
