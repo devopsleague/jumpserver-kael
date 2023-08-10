@@ -38,7 +38,7 @@ func getDefaultConfig() Config {
 		}
 	}
 	return Config{
-		Host:             "localhost",
+		Host:             "0.0.0.0",
 		Port:             "8083",
 		LogLevel:         "INFO",
 		LogDirPath:       logDirPath,
