@@ -10,7 +10,7 @@ type CommandRecord struct {
 type ReviewState int
 
 const (
-	Wait ReviewState = iota
+	Wait ReviewState =  -1 + iota
 	Rejected
 	Approve
 )

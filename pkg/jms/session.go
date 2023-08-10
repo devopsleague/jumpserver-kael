@@ -41,7 +41,9 @@ func (sh *SessionHandler) CreateNewSession(authInfo *protobuf.TokenAuthInfo) *JM
 		SessionHandler:      sh,
 		CommandHandler:      nil,
 		ReplayHandler:       nil,
-		JMSState:            &schemas.JMSState{ID: session.Id},
+		JMSState: &schemas.JMSState{
+			ID: session.Id, ActivateReview: schemas.Wait,
+		},
 	}
 }
 

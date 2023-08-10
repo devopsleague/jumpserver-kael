@@ -47,6 +47,7 @@ func (s *_HandlerApi) JmsStateHandler(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 		return
 	}
+
 	jmsSession.JMSState.ActivateReview = jmsState.ActivateReview
 	ctx.JSON(http.StatusOK, gin.H{"message": "Success"})
 }
