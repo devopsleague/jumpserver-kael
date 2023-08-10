@@ -68,6 +68,7 @@ ARG DEPENDENCIES="                    \
         net-tools                     \
         unzip                         \
         vim                           \
+        locales                       \
         wget"
 
 ARG APT_MIRROR=http://mirrors.ustc.edu.cn
