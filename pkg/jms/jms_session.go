@@ -15,7 +15,8 @@ type JMSSession struct {
 	CurrentAskInterrupt bool
 	CommandACLs         []*protobuf.CommandACL
 	ExpireTime          time.Time
-	MaxIdleTimeDelta    int
+	MaxIdleTime         int
+	MaxSessionTime      int
 	SessionHandler      *SessionHandler
 	CommandHandler      *CommandHandler
 	ReplayHandler       *ReplayHandler
@@ -29,6 +30,7 @@ func (jmss *JMSSession) ActiveSession() {
 		jmss.Websocket, jmss.Session, jmss.CommandACLs, jmss.JMSState,
 	)
 	go jmss.MaximumIdleTimeDetection()
+	go jmss.MaxSessionTimeDetection()
 }
 
 func (jmss *JMSSession) MaximumIdleTimeDetection() {
@@ -38,7 +40,7 @@ func (jmss *JMSSession) MaximumIdleTimeDetection() {
 		currentTime := time.Now()
 		idleTime := currentTime.Sub(lastActiveTime)
 
-		if idleTime.Seconds() >= float64(1*60) {
+		if idleTime.Seconds() >= float64(jmss.MaxIdleTime*60) {
 			jmss.Close()
 			break
 		}
@@ -47,7 +49,21 @@ func (jmss *JMSSession) MaximumIdleTimeDetection() {
 			lastActiveTime = currentTime
 			jmss.JMSState.NewDialogue = false
 		}
+		time.Sleep(3 * time.Second)
+	}
+}
 
+func (jmss *JMSSession) MaxSessionTimeDetection() {
+	lastActiveTime := time.Now()
+
+	for {
+		currentTime := time.Now()
+		idleTime := currentTime.Sub(lastActiveTime)
+
+		if idleTime.Seconds() >= float64(jmss.MaxSessionTime*60*60) {
+			jmss.Close()
+			break
+		}
 		time.Sleep(3 * time.Second)
 	}
 }
