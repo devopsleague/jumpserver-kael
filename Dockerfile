@@ -1,7 +1,7 @@
 FROM golang:1.19-buster as stage-wisp-build
 ARG TARGETARCH
 ARG GOPROXY=https://goproxy.io
-ARG WISP_VERSION=v0.1.11
+ARG WISP_VERSION=v0.1.13
 ENV GO111MODULE=on
 ENV CGO_ENABLED=0
 
