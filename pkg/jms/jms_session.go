@@ -2,6 +2,7 @@ package jms
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/jumpserver/kael/pkg/schemas"
 	"github.com/jumpserver/wisp/protobuf-go/protobuf"
@@ -41,7 +42,7 @@ func (jmss *JMSSession) MaximumIdleTimeDetection() {
 		idleTime := currentTime.Sub(lastActiveTime)
 
 		if idleTime.Seconds() >= float64(jmss.MaxIdleTime*60) {
-			reason := "超过当前会话最大空闲时间, 会话中断"
+			reason := fmt.Sprintf("超过当前会话最大空闲时间 %d(分), 会话中断", jmss.MaxIdleTime)
 			jmss.Close(reason)
 			break
 		}
@@ -62,7 +63,7 @@ func (jmss *JMSSession) MaxSessionTimeDetection() {
 		idleTime := currentTime.Sub(lastActiveTime)
 
 		if idleTime.Seconds() >= float64(jmss.MaxSessionTime*60*60) {
-			reason := "超过当前会话最大时间, 会话中断"
+			reason := fmt.Sprintf("超过当前会话最大时间 %d(时), 会话中断", jmss.MaxSessionTime)
 			jmss.Close(reason)
 			break
 		}
