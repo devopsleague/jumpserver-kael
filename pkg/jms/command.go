@@ -24,8 +24,7 @@ type CommandHandler struct {
 }
 
 const (
-	WAIT_TICKET_TIMEOUT  = 60 * 3
-	WAIT_TICKET_INTERVAL = 2
+	WAIT_TICKET_TIMEOUT = 60 * 3
 )
 
 func NewCommandHandler(
@@ -125,35 +124,54 @@ func (ch *CommandHandler) WaitForTicketStatusChange(ticketInfo *protobuf.TicketI
 	endTime := startTime.Add(time.Duration(WAIT_TICKET_TIMEOUT) * time.Second)
 	ticketClosed := true
 	isContinue := false
-	for time.Now().Before(endTime) {
-		req := &protobuf.TicketRequest{Req: ticketInfo.CheckReq}
-		resp, _ := grpc.GlobalGrpcClient.Client.CheckTicketState(ctx, req)
-		if !resp.Status.Ok {
-			logger.GlobalLogger.Error("Failed to check ticket status")
-			break
-		}
-		switch resp.Data.State {
-		case protobuf.TicketState_Approved:
-			isContinue = true
-			ticketClosed = false
-			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewAccept
-			break
-		case protobuf.TicketState_Rejected:
-			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewReject
-			ticketClosed = false
+	OuterLoop:
+		for time.Now().Before(endTime) {
+			req := &protobuf.TicketRequest{Req: ticketInfo.CheckReq}
+			resp, _ := grpc.GlobalGrpcClient.Client.CheckTicketState(ctx, req)
+			if !resp.Status.Ok {
+				logger.GlobalLogger.Error("Failed to check ticket status")
+				break OuterLoop
+			}
+			switch resp.Data.State {
+			case protobuf.TicketState_Approved:
+				isContinue = true
+				ticketClosed = false
+				ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewAccept
+				break OuterLoop
+			case protobuf.TicketState_Rejected:
+				ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewReject
+				ticketClosed = false
+				response = &schemas.AskResponse{
+					Type:           schemas.Waiting,
+					ConversationID: ch.Session.Id,
+					SystemMessage:  "复核已拒绝",
+				}
 
-		case protobuf.TicketState_Closed:
-			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewCancel
-			ticketClosed = false
+				jsonResponse, _ = json.Marshal(response)
+				_ = ch.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
+				break OuterLoop
 
-		default:
-			time.Sleep(WAIT_TICKET_INTERVAL)
+			case protobuf.TicketState_Closed:
+				ch.CommandRecord.RiskLevel = protobuf.RiskLevel_ReviewCancel
+				ticketClosed = false
+				response = &schemas.AskResponse{
+					Type:           schemas.Waiting,
+					ConversationID: ch.Session.Id,
+					SystemMessage:  "复核已关闭",
+				}
+
+				jsonResponse, _ = json.Marshal(response)
+				_ = ch.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
+				break OuterLoop
+			case protobuf.TicketState_Open:
+				time.Sleep(2 * time.Second)
+			}
 		}
-	}
 
 	if ticketClosed {
 		ch.CloseTicket(ticketInfo)
 	}
+
 	return isContinue
 }
 
@@ -190,21 +208,21 @@ func (ch *CommandHandler) CommandACLFilter() bool {
 			isContinue = false
 			startTime := time.Now()
 			endTime := startTime.Add(time.Duration(60) * time.Second)
-
-			for time.Now().Before(endTime) {
-				switch ch.JMSState.ActivateReview {
-				case schemas.Wait:
-					time.Sleep(1 * time.Second)
-				case schemas.Rejected:
-					isContinue = false
-					ch.JMSState.ActivateReview = schemas.Wait
-					break
-				case schemas.Approve:
-					ch.JMSState.ActivateReview = schemas.Wait
-					isContinue = ch.CreateAndWaitTicket(acl)
-					break
+			OuterLoop:
+				for time.Now().Before(endTime) {
+					switch ch.JMSState.ActivateReview {
+					case schemas.Wait:
+						time.Sleep(1 * time.Second)
+					case schemas.Rejected:
+						isContinue = false
+						ch.JMSState.ActivateReview = schemas.Wait
+						break OuterLoop
+					case schemas.Approve:
+						ch.JMSState.ActivateReview = schemas.Wait
+						isContinue = ch.CreateAndWaitTicket(acl)
+						break OuterLoop
+					}
 				}
-			}
 		}
 	}
 	return isContinue

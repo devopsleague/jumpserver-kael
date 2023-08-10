@@ -26,7 +26,7 @@ func NewClient(authToken, baseURL, proxy string) *openai.Client {
 func AddProxy(config *openai.ClientConfig, proxy string) {
 	proxyUrl, err := url.Parse(proxy)
 	if err != nil {
-		fmt.Println(err)
+		logger.GlobalLogger.Error(err.Error(), zap.Error(err))
 	}
 	transport := &http.Transport{
 		Proxy: http.ProxyURL(proxyUrl),
