@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/jumpserver/kael/pkg/jms"
 	"github.com/jumpserver/kael/pkg/logger"
 	"github.com/sashabaranov/go-openai"
