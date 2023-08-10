@@ -15,8 +15,16 @@ const (
 	Finish  AskResponseType = "finish"
 )
 
+type SessionStateType string
+
+const (
+	LockSession   SessionStateType = "lock"
+	UnlockSession SessionStateType = "unlock"
+)
+
 type ResponseMeta struct {
-	ActivateReview bool `json:"activate_review" default:"false"`
+	ActivateReview bool             `json:"activate_review,omitempty"`
+	SessionState   SessionStateType `json:"session_state,omitempty"`
 }
 
 type AskResponse struct {
