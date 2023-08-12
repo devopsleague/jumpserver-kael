@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"github.com/jumpserver/kael/pkg/jms"
 	"github.com/jumpserver/kael/pkg/logger"
@@ -13,26 +14,61 @@ import (
 	"strings"
 )
 
+type TransportOptions struct {
+	UseProxy        bool
+	ProxyURL        *url.URL
+	SkipCertificate bool
+}
+
+type TransportOption func(*TransportOptions)
+
+func WithProxy(proxyURL string) TransportOption {
+	UseProxy := proxyURL != ""
+	proxy, err := url.Parse(proxyURL)
+	if err != nil {
+		proxy = nil
+		UseProxy = false
+		logger.GlobalLogger.Error(err.Error(), zap.Error(err))
+	}
+	return func(opts *TransportOptions) {
+		opts.UseProxy = UseProxy
+		opts.ProxyURL = proxy
+	}
+}
+
+func WithSkipCertificate(skip bool) TransportOption {
+	return func(opts *TransportOptions) {
+		opts.SkipCertificate = skip
+	}
+}
+
+func NewCustomTransport(options ...TransportOption) *http.Transport {
+	transportOpts := &TransportOptions{}
+
+	for _, opt := range options {
+		opt(transportOpts)
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: transportOpts.SkipCertificate}
+	transport := &http.Transport{TLSClientConfig: tlsConfig}
+
+	if transportOpts.UseProxy {
+		transport.Proxy = http.ProxyURL(transportOpts.ProxyURL)
+	}
+
+	return transport
+}
+
 func NewClient(authToken, baseURL, proxy string) *openai.Client {
 	config := openai.DefaultConfig(authToken)
 	config.BaseURL = strings.TrimRight(baseURL, "/")
-	if proxy != "" {
-		AddProxy(&config, proxy)
-	}
-	return openai.NewClientWithConfig(config)
-}
-
-func AddProxy(config *openai.ClientConfig, proxy string) {
-	proxyUrl, err := url.Parse(proxy)
-	if err != nil {
-		logger.GlobalLogger.Error(err.Error(), zap.Error(err))
-	}
-	transport := &http.Transport{
-		Proxy: http.ProxyURL(proxyUrl),
-	}
+	transport := NewCustomTransport(
+		WithProxy(proxy), WithSkipCertificate(true),
+	)
 	config.HTTPClient = &http.Client{
 		Transport: transport,
 	}
+	return openai.NewClientWithConfig(config)
 }
 
 func ChatGPT(ask *AskChatGPT, jmss *jms.JMSSession) {
