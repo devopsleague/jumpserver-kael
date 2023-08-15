@@ -14,7 +14,7 @@ const props = defineProps({
 
 const { item = {} } = toRefs(props)
 const NMessage = useMessage()
-const asRawText = ref(props.item.message.role === 'assistant')
+const asRawText = ref(props.item.message?.role === 'assistant')
 const userAvatar = computed(() => {
   return '/api/v1/settings/logo/'
 })

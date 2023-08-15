@@ -37,6 +37,10 @@ export const useChatStore = defineStore('chat-store', {
       this.activeTab = id
     },
 
+    setActiveChatConversationId(data) {
+      this.filterChat.conversation_id = data
+    },
+
     addSessionsStore(data) {
       this.sessionsStore.unshift(data)
       if (data?.id) {
