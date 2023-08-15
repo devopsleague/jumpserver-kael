@@ -10,7 +10,7 @@ const value = ref('')
 const isIM = ref(false)
 const emit = defineEmits()
 const loading = computed(() => chatStore.loading)
-const disabled = computed(() => chatStore.filterChat.disabled || false)
+const disabled = computed(() => chatStore.activeChat.disabled || false)
 const isGlobalDisabled = computed(() => chatStore.globalDisabled || false)
 
 const onSendHandle = () => {

@@ -15,7 +15,7 @@ const props = defineProps({
 const { item, to, index } = toRefs(props)
 const isShow = ref(true)
 
-const currentChat = computed(() => chatStore.filterChat.chats[index.value] || {})
+const currentChat = computed(() => chatStore.activeChat.chats[index.value] || {})
 
 const onClick = (value) => {
   console.log('value: ', value)
@@ -27,15 +27,15 @@ const onClick = (value) => {
     }
   ).finally(() => {
     isShow.value = false
-    chatStore.updateChatConversationDisabledById(index.value, true)
+    chatStore.updateChatConversationDisabledByIndex(index.value, true)
   })
 }
 
 watch(isShow, (value) => {
   if (value) {
-    chatStore.setFilterChatDisabled(true)
+    chatStore.setActiveChatDisabled(true)
   } else {
-    chatStore.setFilterChatDisabled(false)
+    chatStore.setActiveChatDisabled(false)
   }
 }, { immediate: true })
 

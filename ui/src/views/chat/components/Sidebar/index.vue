@@ -5,7 +5,7 @@ import { useChatStore, useAppStore } from '@/store'
 const appStore = useAppStore()
 const chatStore = useChatStore()
 const activeTab = computed(() => chatStore.activeTab)
-const sessions = computed(() => chatStore.sessionsStore)
+const sessions = computed(() => chatStore.chatsStore)
 const loading = computed(() => chatStore.loading)
 const sidebarWidth = computed(() => appStore.sidebarWidth)
 const isGlobalDisabled = computed(() => chatStore.globalDisabled || false)
@@ -22,7 +22,7 @@ const onNewChat = () => {
 }
 
 const onDelete = (id) => {
-  chatStore.removeSessionsStore(id)
+  chatStore.removeChatInStore(id)
 }
 
 const onSwitchSidebar = () => {
