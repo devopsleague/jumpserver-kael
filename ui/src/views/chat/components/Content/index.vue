@@ -14,6 +14,7 @@ const {
   getInputFocus,
   addChatConversationById,
   addTemporaryLoadingChat,
+  setCorrespondChatDisabled,
   addSystemMessageToCurrentChat,
   updateChatConversationContentById
 } = useChat()
@@ -21,7 +22,7 @@ const chatStore = useChatStore()
 const $axios = inject("$axios")
 const currentConversationId = ref('')
 const env = import.meta.env
-const currentSessionStore = computed(() => chatStore.filterChat)
+const currentActiveChat = computed(() => chatStore.activeChat)
 
 const onWebSocketMessage = (data) => {
   currentConversationId.value = data?.conversation_id
@@ -31,18 +32,7 @@ const onWebSocketMessage = (data) => {
     return
   }
   if (data.type === 'message') {
-    if (hasChat(data.message.id)) {
-      chatStore.removeLastChat()
-      addChatConversationById(data)
-    } else {
-      updateChatConversationContentById(data.message.id, data.message.content)
-    }
-    if (data.message?.type === 'finish') {
-      setLoading(false)
-      nextTick(() => {
-        getInputFocus()
-      })
-    }
+    onConversationMessage(data)
   }
 }
 
@@ -64,17 +54,30 @@ const onSystemMessage = (data) => {
   if (data.type === 'waiting') {
     const sessionState = data?.meta?.session_state || ''
     if (sessionState === 'lock') {
-      chatStore.setFilterChatDisabled(true)
+      setCorrespondChatDisabled(data, true)
       return
     }
     if (sessionState === 'unlock') {
-      chatStore.setFilterChatDisabled(false)
+      setCorrespondChatDisabled(data, false)
       return
     }
   }
   if (data.type === 'finish') {
-    chatStore.setFilterChatDisabled(true)
+    setCorrespondChatDisabled(data, true)
   }
+}
+
+const onConversationMessage = (data) => {
+  if (hasChat(data.message.id)) {
+      chatStore.removeLastChat()
+      addChatConversationById(data)
+    } else {
+      updateChatConversationContentById(data.message.id, data.message.content)
+    }
+    if (data.message?.type === 'finish') {
+      setLoading(false)
+      nextTick(() => getInputFocus())
+    }
 }
 
 const onSendHandle = (value) => {
@@ -126,7 +129,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <template v-if="!currentSessionStore?.chats?.length">
+  <template v-if="!currentActiveChat.chats?.length">
     <Empty />
   </template>
   <div v-else class="content" id="content">
@@ -135,7 +138,7 @@ onUnmounted(() => {
         <div>
           <div class="overflow-y-auto">
             <Message
-            v-for="(item, index) of currentSessionStore.chats"
+            v-for="(item, index) of currentActiveChat.chats"
             :key="index"
             :index="index"
             :item="item"

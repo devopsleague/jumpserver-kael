@@ -6,12 +6,12 @@ export const useChatStore = defineStore('chat-store', {
     tabNum: 0,
     activeTab: 0,
     globalDisabled: false,
-    sessionsStore: []
+    chatsStore: []
   }),
   getters: {
-    filterChat(state) {
-      const currentChat = state.sessionsStore.filter((chat) => chat.id === state.activeTab)?.[0] || {}
-      return currentChat
+    activeChat(state) {
+      const chat = state.chatsStore.filter((chat) => chat.id === state.activeTab)?.[0] || {}
+      return chat
     }
   },
   actions: {
@@ -23,8 +23,8 @@ export const useChatStore = defineStore('chat-store', {
       this.tabNum++
     },
 
-    setFilterChatDisabled(disabled) {
-      this.filterChat.disabled = disabled
+    setActiveChatDisabled(disabled) {
+      this.activeChat.disabled = disabled
     },
 
     setGlobalDisabled(disabled) {
@@ -38,47 +38,47 @@ export const useChatStore = defineStore('chat-store', {
     },
 
     setActiveChatConversationId(data) {
-      this.filterChat.conversation_id = data
+      this.activeChat.conversation_id = data
     },
 
-    addSessionsStore(data) {
-      this.sessionsStore.unshift(data)
+    addChatToStore(data) {
+      this.chatsStore.unshift(data)
       if (data?.id) {
         this.setActiveNum(data.id)
       }
     },
 
-    removeSessionsStore(id) {
-      const sessionsStore = this.sessionsStore.filter(item => item.id !== id)
-      this.sessionsStore = sessionsStore
-      const hasActiveTab = sessionsStore.find(item => item.id === this.activeTab)
+    removeChatInStore(id) {
+      const chatsStore = this.chatsStore.filter(item => item.id !== id)
+      this.chatsStore = chatsStore
+      const hasActiveTab = chatsStore.find(item => item.id === this.activeTab)
       if (!hasActiveTab) {
-        this.activeTab = sessionsStore?.[0]?.id
+        this.activeTab = chatsStore?.[0]?.id
       }
     },
 
-    addChatsById(chat) {
-      this.filterChat.chats?.push(chat)
+    addConversationToActiveChat(chat) {
+      this.activeChat.chats?.push(chat)
     },
 
     removeLastChat() {
-      const length = this.filterChat.chats?.length
+      const length = this.activeChat.chats?.length
       if (length > 0) {
-        const lastChat = this.filterChat.chats[length - 1]
+        const lastChat = this.activeChat.chats[length - 1]
         if (lastChat?.message?.content === 'loading') {
-          this.filterChat.chats.pop()
+          this.activeChat.chats.pop()
         }
       }
     },
 
     updateChatConversationContentById(id, content) {
-      const chats = this.filterChat.chats || []
+      const chats = this.activeChat.chats || []
       const filterChat = chats.filter((chat) => chat.message.id === id)?.[0] || {}
       filterChat.message.content = content
     },
 
-    updateChatConversationDisabledById(index, disabled) {
-      const chats = this.filterChat.chats || []
+    updateChatConversationDisabledByIndex(index, disabled) {
+      const chats = this.activeChat.chats || []
       const chat = chats[index]
       chat.disabled = disabled
     }
