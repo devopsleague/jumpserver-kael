@@ -15,10 +15,10 @@ export function useChat() {
 
   const onNewChat = (name) => {
     chatStore.setTabNum()
-    console.log('chatStore: ', chatStore);
     const data = {
       name: name || `new chat ${chatStore.tabNum}`,
       id: chatStore.tabNum,
+      conversation_id: '',
       chats: []
     }
     chatStore.addSessionsStore(data)
@@ -26,6 +26,20 @@ export function useChat() {
 
   const addChatConversationById = (chat) => {
     chatStore.addChatsById(chat)
+    chatStore.setActiveChatConversationId(chat?.conversation_id)
+    pageScroll('scrollRef')
+  }
+
+  const addSystemMessageToCurrentChat = (data) => {
+    const currentChat = chatStore.filterChat
+    if (currentChat.conversation_id === data.conversation_id) {
+      chatStore.addChatsById(data)
+    } else {
+      const sessionsStore = chatStore.sessionsStore.filter(item => item.conversation_id === data.conversation_id)
+      if (sessionsStore.length > 0) {
+        sessionsStore[0].chats?.push(data)
+      }
+    }
     pageScroll('scrollRef')
   }
 
@@ -43,7 +57,6 @@ export function useChat() {
   const onNewChatOrAddChatConversationById = (chat) => {
     onNewChat(chat.message.content)
     addChatConversationById(chat)
-    console.log(chatStore.sessionsStore)
   }
 
   const updateChatConversationContentById = (id, content) => {
@@ -69,6 +82,7 @@ export function useChat() {
     setLoading,
     addChatConversationById,
     addTemporaryLoadingChat,
+    addSystemMessageToCurrentChat,
     updateChatConversationContentById
   }
 }

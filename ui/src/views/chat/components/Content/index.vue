@@ -8,12 +8,19 @@ import { createWebSocket, onSend, closeWs } from '@/utils/socket'
 import { useChatStore } from '@/store'
 import { pageScroll } from '@/utils/common'
 
-const { hasChat, setLoading, getInputFocus, addChatConversationById, addTemporaryLoadingChat, updateChatConversationContentById } = useChat()
+const {
+  hasChat,
+  setLoading,
+  getInputFocus,
+  addChatConversationById,
+  addTemporaryLoadingChat,
+  addSystemMessageToCurrentChat,
+  updateChatConversationContentById
+} = useChat()
 const chatStore = useChatStore()
 const $axios = inject("$axios")
 const currentConversationId = ref('')
 const env = import.meta.env
-
 const currentSessionStore = computed(() => chatStore.filterChat)
 
 const onWebSocketMessage = (data) => {
@@ -24,7 +31,6 @@ const onWebSocketMessage = (data) => {
     return
   }
   if (data.type === 'message') {
-    currentConversationId.value = data.conversation_id
     if (hasChat(data.message.id)) {
       chatStore.removeLastChat()
       addChatConversationById(data)
@@ -51,7 +57,7 @@ const onSystemMessage = (data) => {
     }
   }
   chatStore.removeLastChat()
-  addChatConversationById(data)
+  addSystemMessageToCurrentChat(data)
   setLoading(false)
   nextTick(() => getInputFocus())
 
@@ -120,7 +126,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <template v-if="!currentSessionStore.chats?.length">
+  <template v-if="!currentSessionStore?.chats?.length">
     <Empty />
   </template>
   <div v-else class="content" id="content">
