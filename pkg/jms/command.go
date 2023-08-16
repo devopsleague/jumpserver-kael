@@ -164,7 +164,7 @@ func (ch *CommandHandler) WaitForTicketStatusChange(ticketInfo *protobuf.TicketI
 				_ = ch.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
 				break OuterLoop
 			case protobuf.TicketState_Open:
-				time.Sleep(2 * time.Second)
+				time.Sleep(3 * time.Second)
 			}
 		}
 
@@ -191,9 +191,9 @@ func (ch *CommandHandler) CommandACLFilter() bool {
 			_ = ch.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
 
 			isContinue = false
-			ch.CommandRecord.RiskLevel = protobuf.RiskLevel(protobuf.CommandACL_Reject)
+			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_Reject
 		case protobuf.CommandACL_Warning:
-			ch.CommandRecord.RiskLevel = protobuf.RiskLevel(protobuf.CommandACL_Warning)
+			ch.CommandRecord.RiskLevel = protobuf.RiskLevel_Warning
 		case protobuf.CommandACL_Review:
 			response := &schemas.AskResponse{
 				Type:           schemas.Waiting,
