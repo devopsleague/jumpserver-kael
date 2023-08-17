@@ -15,9 +15,7 @@ const props = defineProps({
 const { item, to, index } = toRefs(props)
 const isShow = ref(true)
 
-const currentChat = computed(() => {
-  return chatStore.filterChat.chats[index.value] || {}
-})
+const currentChat = computed(() => chatStore.activeChat.chats[index.value] || {})
 
 const onClick = (value) => {
   console.log('value: ', value)
@@ -29,15 +27,15 @@ const onClick = (value) => {
     }
   ).finally(() => {
     isShow.value = false
-    chatStore.updateChatConversationDisabledById(index.value, true)
+    chatStore.updateChatConversationDisabledByIndex(index.value, true)
   })
 }
 
 watch(isShow, (value) => {
   if (value) {
-    chatStore.setFilterChatDisabled(true)
+    chatStore.setActiveChatDisabled(true)
   } else {
-    chatStore.setFilterChatDisabled(false)
+    chatStore.setActiveChatDisabled(false)
   }
 }, { immediate: true })
 
@@ -69,10 +67,10 @@ onMounted(() => {
       </span>
       <template #footer>
         <div class="footer text-center">
-          <n-button secondary @click="onClick('yes')">
+          <n-button secondary @click="onClick(1)">
             是
           </n-button>
-          <n-button secondary class="ml-10px" @click="onClick('no')">
+          <n-button secondary class="ml-10px" @click="onClick(0)">
             否
           </n-button>
         </div>

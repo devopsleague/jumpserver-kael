@@ -38,3 +38,7 @@ export function getUrlParams(url = window.location.search) {
   return obj
 }
 
+export function isMobile() {
+  const flag = navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Windows Phone)/i)
+  return flag;
+}

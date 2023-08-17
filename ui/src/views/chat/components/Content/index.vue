@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, inject, onUnmounted } from 'vue'
+import { ref, onMounted, computed, inject, onUnmounted, nextTick } from 'vue'
 import Message from '../Message/index.vue'
 import Empty from '../Empty/index.vue'
 import Footer from '../Footer/index.vue'
@@ -8,39 +8,66 @@ import { createWebSocket, onSend, closeWs } from '@/utils/socket'
 import { useChatStore } from '@/store'
 import { pageScroll } from '@/utils/common'
 
-const { hasChat, setLoading, addChatConversationById, addTemporaryLoadingChat, updateChatConversationContentById } = useChat()
+const {
+  hasChat,
+  setLoading,
+  getInputFocus,
+  addChatConversationById,
+  addTemporaryLoadingChat,
+  setCorrespondChatDisabled,
+  addSystemMessageToCurrentChat,
+  updateChatConversationContentById
+} = useChat()
 const chatStore = useChatStore()
 const $axios = inject("$axios")
-const currentConversationId = ref('')
 const env = import.meta.env
-
-const currentSessionStore = computed(() => {
-  return chatStore.filterChat
-})
+const currentActiveChat = computed(() => chatStore.activeChat)
+const currentConversationId = computed(() => chatStore.activeChat.conversation_id)
 
 const onWebSocketMessage = (data) => {
-  currentConversationId.value = data?.conversation_id
   const types = ['waiting', 'reject', 'error', 'finish']
   if (types.includes(data.type)) {
-    data = {
-      ...data,
-      error: 'error',
-      message: {
-        content: data.system_message,
-        role: 'assistant',
-        create_time: new Date()
-      }
-    }
-    chatStore.removeLastChat()
-    addChatConversationById(data)
-    setLoading(false)
-    if (data.type === 'finish') {
-      chatStore.setFilterChatDisabled(true)
-    }
+    onSystemMessage(data)
+    return
   }
   if (data.type === 'message') {
-    currentConversationId.value = data.conversation_id
-    if (hasChat(data.message.id)) {
+    onConversationMessage(data)
+  }
+}
+
+const onSystemMessage = (data) => {
+  data = {
+    ...data,
+    error: 'error',
+    message: {
+      content: data.system_message,
+      role: 'assistant',
+      create_time: new Date()
+    }
+  }
+  chatStore.removeLastChat()
+  addSystemMessageToCurrentChat(data)
+  setLoading(false)
+  nextTick(() => getInputFocus())
+
+  if (data.type === 'waiting') {
+    const sessionState = data?.meta?.session_state || ''
+    if (sessionState === 'lock') {
+      setCorrespondChatDisabled(data, true)
+      return
+    }
+    if (sessionState === 'unlock') {
+      setCorrespondChatDisabled(data, false)
+      return
+    }
+  }
+  if (data.type === 'finish') {
+    setCorrespondChatDisabled(data, true)
+  }
+}
+
+const onConversationMessage = (data) => {
+  if (hasChat(data.message.id)) {
       chatStore.removeLastChat()
       addChatConversationById(data)
     } else {
@@ -48,8 +75,8 @@ const onWebSocketMessage = (data) => {
     }
     if (data.message?.type === 'finish') {
       setLoading(false)
+      nextTick(() => getInputFocus())
     }
-  }
 }
 
 const onSendHandle = (value) => {
@@ -101,7 +128,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <template v-if="!currentSessionStore.chats?.length">
+  <template v-if="!currentActiveChat.chats?.length">
     <Empty />
   </template>
   <div v-else class="content" id="content">
@@ -110,7 +137,7 @@ onUnmounted(() => {
         <div>
           <div class="overflow-y-auto">
             <Message
-            v-for="(item, index) of currentSessionStore.chats"
+            v-for="(item, index) of currentActiveChat.chats"
             :key="index"
             :index="index"
             :item="item"

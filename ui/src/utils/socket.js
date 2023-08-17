@@ -91,16 +91,14 @@ export function onClose(){
     error: 'error'
   }
   chatStore.removeLastChat()
-  chatStore.addChatsById(chat)
+  chatStore.addConversationToActiveChat(chat)
   lunaEvent.sendEventToLuna(MESSAGES.CLOSE)
   window.$dialog.warning({
     title: '提示',
     content: '连接已断开',
-    closable: false,
-    closeOnEsc: false,
-    maskClosable: false,
     action: () => ''
   })
+  chatStore.setGlobalDisabled(true)
 }
 
 // 断开关闭

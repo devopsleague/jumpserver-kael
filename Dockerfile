@@ -1,7 +1,7 @@
 FROM golang:1.19-buster as stage-wisp-build
 ARG TARGETARCH
 ARG GOPROXY=https://goproxy.io
-ARG WISP_VERSION=v0.1.11
+ARG WISP_VERSION=v0.1.15
 ENV GO111MODULE=on
 ENV CGO_ENABLED=0
 
@@ -27,15 +27,52 @@ ADD ui .
 RUN --mount=type=cache,target=/usr/local/share/.cache/yarn,sharing=locked,id=kael \
     yarn build
 
-FROM jumpserver/python:3.10-slim-buster
+FROM golang:1.20-buster as kael-build
+ARG TARGETARCH
+
+WORKDIR /opt/kael
+
+ADD go.mod go.sum .
+
+ARG GOPROXY=https://goproxy.io
+ENV CGO_ENABLED=0
+ENV GO111MODULE=on
+ENV GOOS=linux
+
+RUN --mount=type=cache,target=/root/.cache \
+    --mount=type=cache,target=/go/pkg/mod \
+    go mod download -x
+
+COPY . .
+
+ARG VERSION
+ENV VERSION=$VERSION
+
+RUN --mount=type=cache,target=/root/.cache \
+    --mount=type=cache,target=/go/pkg/mod \
+    set +x \
+    && export GOFlAGS="-X 'main.Buildstamp=`date -u '+%Y-%m-%d %I:%M:%S%p'`'" \
+    && export GOFlAGS="$GOFlAGS -X 'main.Githash=`git rev-parse HEAD`'" \
+    && export GOFlAGS="${GOFlAGS} -X 'main.Goversion=`go version`'" \
+    && export GOFlAGS="$GOFlAGS -X 'main.Version=$VERSION'" \
+    && go build -ldflags "$GOFlAGS" -o kael ./cmd/kael \
+    && set -x && ls -al .
+
+RUN mkdir /opt/kael/release \
+    && mv /opt/kael/entrypoint.sh /opt/kael/release
+
+
+FROM debian:bullseye-slim
 ARG TARGETARCH
 
 ARG DEPENDENCIES="                    \
-    ca-certificates                   \
-    curl                              \
-    libssl-dev                        \
-    locales                           \
-    vim"
+        curl                          \
+        git                           \
+        net-tools                     \
+        unzip                         \
+        vim                           \
+        locales                       \
+        wget"
 
 ARG APT_MIRROR=http://mirrors.ustc.edu.cn
 
@@ -44,49 +81,26 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=kael \
     && rm -f /etc/apt/apt.conf.d/docker-clean \
     && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && apt-get update \
-    && apt-get -y install --no-install-recommends ${DEPENDENCIES} \
-    && mkdir -p /root/.ssh/ \
-    && echo "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile /dev/null" > /root/.ssh/config \
-    && echo "set mouse-=a" > ~/.vimrc \
+    && apt-get install -y --no-install-recommends ${DEPENDENCIES} \
+    && apt-get update \
     && echo "no" | dpkg-reconfigure dash \
     && echo "zh_CN.UTF-8" | dpkg-reconfigure locales \
     && sed -i "s@# export @export @g" ~/.bashrc \
     && sed -i "s@# alias @alias @g" ~/.bashrc \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /tmp/build
-COPY ./app/requirements.txt ./requirements/requirements.txt
+WORKDIR /opt/kael/
 
-ARG PIP_MIRROR=https://pypi.douban.com/simple
-
-RUN --mount=type=cache,target=/root/.cache/pip \
-    set -ex \
-    && pip config set global.index-url ${PIP_MIRROR} \
-    && pip install --upgrade pip \
-    && pip install --upgrade setuptools wheel \
-    && \
-    if [ "${TARGETARCH}" == "loong64" ]; then \
-        pip install https://download.jumpserver.org/pypi/simple/grpcio/grpcio-1.56.0-cp310-cp310-linux_loongarch64.whl; \
-    fi \
-    && pip install -r requirements/requirements.txt
-
-WORKDIR /opt/kael
-
-COPY app .
-COPY --from=ui-build /opt/kael/ui/dist ./ui
+COPY --from=ui-build /opt/kael/ui/dist ./ui/dist
 COPY --from=stage-wisp-build /go/bin/wisp /usr/local/bin/wisp
+COPY --from=kael-build /opt/kael/kael .
+COPY --from=kael-build /opt/kael/release .
 
 RUN chmod +x ./entrypoint.sh
 
-ARG VERSION
-ENV VERSION=$VERSION
-
 ENV LANG=zh_CN.UTF-8
-
-ENV WORK_DIR=/opt/kael
 ENV COMPONENT_NAME=kael
-ENV EXECUTE_PROGRAM="uvicorn main:app --host 0.0.0.0 --port 8083"
+ENV EXECUTE_PROGRAM="/opt/kael/kael"
 
 EXPOSE 8083
-
 CMD ["./entrypoint.sh"]

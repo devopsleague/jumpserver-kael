@@ -1,11 +1,14 @@
 <script setup>
 import { computed } from 'vue'
-import { useChatStore } from '@/store'
+import { useChatStore, useAppStore } from '@/store'
 
+const appStore = useAppStore()
 const chatStore = useChatStore()
 const activeTab = computed(() => chatStore.activeTab)
-const sessions = computed(() => chatStore.sessionsStore)
+const sessions = computed(() => chatStore.chatsStore)
 const loading = computed(() => chatStore.loading)
+const sidebarWidth = computed(() => appStore.sidebarWidth)
+const isGlobalDisabled = computed(() => chatStore.globalDisabled || false)
 
 const switchTab = (id) => {
   if (loading.value) return
@@ -19,29 +22,44 @@ const onNewChat = () => {
 }
 
 const onDelete = (id) => {
-  chatStore.removeSessionsStore(id)
+  chatStore.removeChatInStore(id)
+}
+
+const onSwitchSidebar = () => {
+  appStore.switchSidebar()
 }
 
 </script>
 <template>
   <n-layout-sider
+    bordered
     collapse-mode="width"
     :collapsed-width="0"
-    :width="240"
+    :width="sidebarWidth"
     show-trigger="arrow-circle"
-    content-style="padding: 16px;"
-    bordered
+    content-style="padding: 16px;overflow-x:hidden;"
     class="bg-[#202123]"
   >
     <div class="box-border">
-      <n-button
-        secondary
-        class="mb-16px w-full border border-solid border-[#545557] h-44px rounded-6px"
-        :disabled="loading"
-        @click="onNewChat"
-      >
-        <i class="fa fa-plus mr-12px"></i>New chat
-      </n-button>
+      <div class="flex justify-between mb-16px">
+        <n-button
+          secondary
+          style="--n-color-hover: #2c2d32;"
+          class="border border-solid border-[#545557] h-44px rounded-6px flex-1 bg-transparent"
+          :disabled="loading || isGlobalDisabled"
+          @click="onNewChat"
+        >
+          <SvgIcon name="add" class="mr-28px" />
+          New chat
+        </n-button>
+        <button
+          secondary
+          class="border border-solid border-[#545557] h-44px rounded-6px ml-6px p-13px text-[0px] hover:bg-[#2c2d32]"
+          @click="onSwitchSidebar"
+        >
+          <SvgIcon name="switch" />
+        </button>
+      </div>
       <div 
         v-for="(item, index) in sessions"
         :key="index"
@@ -50,11 +68,11 @@ const onDelete = (id) => {
         @click="switchTab(item.id)"
       >
         <span class="title">
-          <i class="fa fa-commenting-o mr-8px"></i>
+          <SvgIcon name="chat" class="mr-8px" />
           <span style="user-select: none;">{{ item.name }}</span>
         </span>
         <span v-if="activeTab === item.id" class="action">
-          <!-- <i class="fa fa-trash-o cursor-pointer" @click.stop="onDelete(item.id)"></i> -->
+          <!-- <SvgIcon name="delete" @click.stop="onDelete(item.id)" /> -->
         </span>
       </div>
     </div>
@@ -77,11 +95,16 @@ const onDelete = (id) => {
     text-overflow: ellipsis;
   }
 }
-
 .not-allowed {
   cursor: not-allowed;
 }
 .active-tab {
   background-color: #343540;
+}
+::v-deep(.n-button) {
+  justify-content: left;
+}
+::v-deep(.n-layout-toggle-button) {
+  display: none;
 }
 </style>

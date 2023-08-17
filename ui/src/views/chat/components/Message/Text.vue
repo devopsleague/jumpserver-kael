@@ -6,10 +6,8 @@ import mdKatex from '@traptitech/markdown-it-katex'
 import mila from 'markdown-it-link-attributes'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/atom-one-dark.css'
-import { useChatStore } from '@/store'
 import { copy } from '@/utils/common'
 
-const chatStore = useChatStore()
 const props = defineProps({
   message: Object,
   asRawText: Boolean,
@@ -35,7 +33,7 @@ const mdi = new MarkdownIt({
   },
 })
 
-mdi.use(mila, { attrs: { target: '_blank', rel: 'noopener' } })
+mdi.use(mila, { attrs: { target: '_blank', rel: 'noopener', class: "link-style" } })
 mdi.use(mdKatex, { blockClass: 'katexmath-block rounded-md p-[10px]', errorColor: ' #cc0000' })
 
 const wrapClass = computed(() => {
@@ -117,6 +115,16 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
+.markdown-body {
+  font-size: 15px;
+  font-weight: 300;
+}
+::v-deep(.link-style) {
+  color: #487bf4;
+  &:hover {
+    color: #275ee3;
+  }
+}
 .loading-box{
   margin-left: 6px;
 }

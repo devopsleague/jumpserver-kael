@@ -8,20 +8,55 @@ export function useChat() {
     chatStore.setLoading(loading)
   }
 
+  const getInputFocus = () => {
+    const dom = document.getElementsByClassName('n-input__textarea-el')[0]
+    dom?.focus()
+  }
+
   const onNewChat = (name) => {
     chatStore.setTabNum()
-    console.log('chatStore: ', chatStore);
     const data = {
       name: name || `new chat ${chatStore.tabNum}`,
       id: chatStore.tabNum,
+      conversation_id: '',
       chats: []
     }
-    chatStore.addSessionsStore(data)
+    chatStore.addChatToStore(data)
   } 
 
   const addChatConversationById = (chat) => {
-    chatStore.addChatsById(chat)
+    chatStore.addConversationToActiveChat(chat)
+    if (chat?.conversation_id) {
+      chatStore.setActiveChatConversationId(chat.conversation_id)
+    }
     pageScroll('scrollRef')
+  }
+
+  // 添加系统消息到当前聊天
+  const addSystemMessageToCurrentChat = (data) => {
+    const activeChat = chatStore.activeChat
+    if (activeChat.conversation_id === data.conversation_id) {
+      chatStore.addConversationToActiveChat(data)
+    } else {
+      const chatsStore = chatStore.chatsStore.filter(item => item.conversation_id === data.conversation_id)
+      if (chatsStore.length > 0) {
+        chatsStore[0].chats?.push(data)
+      }
+    }
+    pageScroll('scrollRef')
+  }
+
+  // 设置对应的聊天是否禁用
+  const setCorrespondChatDisabled = (data, disabled) => {
+    const activeChat = chatStore.activeChat
+    if (activeChat.conversation_id === data.conversation_id) {
+      chatStore.setActiveChatDisabled(disabled)
+    } else {
+      const chatsStore = chatStore.chatsStore.filter(item => item.conversation_id === data.conversation_id)
+      if (chatsStore.length > 0) {
+        chatsStore[0].disabled = disabled
+      }
+    }
   }
 
   const addTemporaryLoadingChat = () => {
@@ -38,7 +73,6 @@ export function useChat() {
   const onNewChatOrAddChatConversationById = (chat) => {
     onNewChat(chat.message.content)
     addChatConversationById(chat)
-    console.log(chatStore.sessionsStore)
   }
 
   const updateChatConversationContentById = (id, content) => {
@@ -47,7 +81,7 @@ export function useChat() {
   }
 
   const hasChat = (id) => {
-    const chats = chatStore.filterChat.chats
+    const chats = chatStore.activeChat.chats
     const filterChat = chats.filter((chat) => chat.message.id === id)
     if (filterChat.length > 0) {
       return false
@@ -60,9 +94,12 @@ export function useChat() {
     onNewChat,
     onNewChatOrAddChatConversationById,
     hasChat,
+    getInputFocus,
     setLoading,
     addChatConversationById,
     addTemporaryLoadingChat,
+    setCorrespondChatDisabled,
+    addSystemMessageToCurrentChat,
     updateChatConversationContentById
   }
 }
