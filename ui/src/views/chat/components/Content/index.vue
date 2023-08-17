@@ -20,12 +20,11 @@ const {
 } = useChat()
 const chatStore = useChatStore()
 const $axios = inject("$axios")
-const currentConversationId = ref('')
 const env = import.meta.env
 const currentActiveChat = computed(() => chatStore.activeChat)
+const currentConversationId = computed(() => chatStore.activeChat.conversation_id)
 
 const onWebSocketMessage = (data) => {
-  currentConversationId.value = data?.conversation_id
   const types = ['waiting', 'reject', 'error', 'finish']
   if (types.includes(data.type)) {
     onSystemMessage(data)

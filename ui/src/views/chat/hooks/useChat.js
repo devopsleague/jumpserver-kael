@@ -26,7 +26,9 @@ export function useChat() {
 
   const addChatConversationById = (chat) => {
     chatStore.addConversationToActiveChat(chat)
-    chatStore.setActiveChatConversationId(chat?.conversation_id)
+    if (chat?.conversation_id) {
+      chatStore.setActiveChatConversationId(chat.conversation_id)
+    }
     pageScroll('scrollRef')
   }
 
