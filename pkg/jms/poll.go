@@ -61,26 +61,40 @@ func (p *PollJMSEvent) waitForKillSessionMessage() {
 			switch taskAction {
 			case protobuf.TaskAction_KillSession:
 				reason := "当前会话已被中断"
+				p.sendFinishTask(stream, task.Id)
+				p.sendFinishSession(task.SessionId)
 				targetSession.Close(reason)
-				req := &protobuf.SessionFinishRequest{
-					Id: task.SessionId,
-				}
-
-				resp, _ := grpc.GlobalGrpcClient.Client.FinishSession(context.Background(), req)
-				if !resp.Status.Ok {
-					errorMessage := fmt.Sprintf("Failed to finish session: %s", resp.Status.Err)
-					logger.GlobalLogger.Error(errorMessage)
-				}
 			case protobuf.TaskAction_LockSession:
 				msg := "当前会话已被锁定"
+				p.sendFinishTask(stream, task.Id)
 				p.sendSessionState(targetSession, schemas.LockSession, msg)
 			case protobuf.TaskAction_UnlockSession:
 				msg := "当前会话已解锁"
+				p.sendFinishTask(stream, task.Id)
 				p.sendSessionState(targetSession, schemas.UnlockSession, msg)
 			}
 		}
 	}
 	<-waitChan
+}
+func (p *PollJMSEvent) sendFinishTask(stream protobuf.Service_DispatchTaskClient, TaskId string) {
+	req := &protobuf.FinishedTaskRequest{
+		TaskId: TaskId,
+	}
+
+	_ = stream.Send(req)
+}
+
+func (p *PollJMSEvent) sendFinishSession(SessionId string) {
+	req := &protobuf.SessionFinishRequest{
+		Id: SessionId,
+	}
+
+	resp, _ := grpc.GlobalGrpcClient.Client.FinishSession(context.Background(), req)
+	if !resp.Status.Ok {
+		errorMessage := fmt.Sprintf("Failed to finish session: %s", resp.Status.Err)
+		logger.GlobalLogger.Error(errorMessage)
+	}
 }
 
 func (p *PollJMSEvent) sendSessionState(jmss *JMSSession, state schemas.SessionStateType, msg string) {

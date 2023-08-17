@@ -80,7 +80,7 @@ func (s *_ChatApi) ChatHandler(ctx *gin.Context) {
 					SystemMessage:  "current session not found",
 				}
 				jsonResponse, _ := json.Marshal(response)
-				_ = jmss.Websocket.WriteMessage(websocket.TextMessage, jsonResponse)
+				_ = conn.WriteMessage(websocket.TextMessage, jsonResponse)
 				continue
 			} else {
 				jmss.JMSState.NewDialogue = true
